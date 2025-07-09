@@ -1,0 +1,51 @@
+# WordPress specific
+wp-content/
+wp-config.php
+.htaccess
+
+# Plugin specific
+*.log
+*.sql
+*.zip
+*.tar.gz
+
+# Node / build tools (if used for assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Composer
+#vendor/
+composer.lock
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+
+# PHPStorm / VSCode / JetBrains
+.idea/
+.vscode/
+*.code-workspace
+
+# Build / Cache
+cache/
+dist/
+build/
+*.min.css
+*.min.js
+
+# Uploads or temporary plugin export artifacts
+*.tmp
+*.bak
+*.old
+*.orig
+
+# Optional: Ignore dotenv config
+.env
+.env.local
