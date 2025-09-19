@@ -100,12 +100,34 @@ class NPO_List_Table extends WP_List_Table {
             }
 
             // Contenus (CPT publics)
-            $post_types = get_post_types([ 'public' => true ], 'objects');
-            $contents_list = '<ul>';
-            foreach ( $post_types as $pt ) {
+            $post_types = get_post_types([], 'objects');
+
+            $builtin = [];
+            $custom  = [];
+
+            foreach ($post_types as $pt) {
+                // On ignore les types purement techniques
+                if ( in_array($pt->name, ['revision', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache']) ) {
+                    continue;
+                }
+
                 $count = wp_count_posts($pt->name)->publish ?? 0;
-                $contents_list .= '<li><a href="' . esc_url( $admin_url . 'edit.php?post_type=' . $pt->name ) . '" target="_blank">'
-                    . esc_html( $pt->labels->name ) . '</a>: ' . intval( $count ) . '</li>';
+                $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'
+                    . esc_html($pt->labels->name) . '</a>: ' . intval($count) . '</li>';
+
+                if ($pt->_builtin) {
+                    $builtin[] = $item;
+                } else {
+                    $custom[]  = $item;
+                }
+            }
+
+            $contents_list  = '<ul>';
+            if ($builtin) {
+                $contents_list .= '<li><strong>' . __( 'Types natifs', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $builtin) . '</ul></li>';
+            }
+            if ($custom) {
+                $contents_list .= '<li><strong>' . __( 'Types personnalisés', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $custom) . '</ul></li>';
             }
             $contents_list .= '</ul>';
 
@@ -166,8 +188,6 @@ class NPO_List_Table extends WP_List_Table {
             $infos .= '<li>' . __( 'Version', 'rdc-core-mu-utilities' ) . ': ' . $wp_info . '</li>';
             $infos .= '<li>' . __( 'Langue', 'rdc-core-mu-utilities' ) . ': ' . esc_html( $lang ) . '</li>';
             $infos .= '<li>' . __( 'Pièces jointes (total)', 'rdc-core-mu-utilities' ) . ': ' . intval( $attachments_total ) . '</li>';
-            //$infos .= '<li>' . __( 'Médias valides', 'rdc-core-mu-utilities' ) . ': ' . intval( $valid_media_count ) . '</li>';
-            //$infos .= '<li>' . __( 'Fichiers média', 'rdc-core-mu-utilities' ) . ': ' . intval( $media_files ) . '</li>';
             $infos .= '<li><span title="' . esc_attr__( 'Médias avec statut inherit ou publish (utilisables)', 'rdc-core-mu-utilities' ) . '">'
                 . __( 'Médias valides', 'rdc-core-mu-utilities' ) . '</span>: ' . intval( $valid_media_count ) . '</li>';
 
@@ -244,7 +264,7 @@ add_action('admin_head', function() {
             .wp-list-table td.column-taxos { width: 16%; }
             .wp-list-table th.column-plugins,
             .wp-list-table td.column-plugins { width: 16%; }
-            
+
             .wp-list-table span[title] {
                 cursor: help;
                 border-bottom: 1px dotted #666; /* optionnel : souligne pour indiquer l’info-bulle */
