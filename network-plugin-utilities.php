@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Network Plugin Utilities (MU)
-Description: Liste les sites du réseau avec plugins locaux, utilisateurs et stats.
+Description: Liste les sites du réseau avec plugins locaux, utilisateurs, stats et taxonomies.
 Author: Cyrille de Gourcy <cyrille@gourcy.net>
-Version: 1.1
+Version: 1.2
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Sécurité
@@ -34,7 +34,8 @@ function npo_render_page() {
             <th>Site</th>
             <th>Plugins activés localement</th>
             <th>Utilisateurs</th>
-            <th>Statistiques</th>
+            <th>Statistiques (posts & CPT)</th>
+            <th>Taxonomies</th>
         </tr></thead>';
     echo '<tbody>';
 
@@ -61,16 +62,28 @@ function npo_render_page() {
             $user_list = '<em>Aucun</em>';
         }
 
-        // Stats du site
-        $stats = [
-            'Articles' => wp_count_posts('post')->publish ?? 0,
-            'Pages'    => wp_count_posts('page')->publish ?? 0,
-        ];
+        // Stats du site → tous les post types publics
+        $post_types = get_post_types([ 'public' => true ], 'objects');
         $stats_list = '<ul>';
-        foreach ( $stats as $label => $count ) {
-            $stats_list .= '<li>' . esc_html($label) . ': ' . intval($count) . '</li>';
+        foreach ( $post_types as $pt ) {
+            $count = wp_count_posts($pt->name)->publish ?? 0;
+            $stats_list .= '<li>' . esc_html($pt->labels->name) . ': ' . intval($count) . '</li>';
         }
         $stats_list .= '</ul>';
+
+        // Taxonomies du site
+        $taxonomies = get_taxonomies([ 'public' => true ], 'objects');
+        if ( $taxonomies ) {
+            $taxo_list = '<ul>';
+            foreach ( $taxonomies as $tax ) {
+                $terms = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
+                $count = is_array($terms) ? count($terms) : 0;
+                $taxo_list .= '<li>' . esc_html($tax->labels->name) . ': ' . intval($count) . '</li>';
+            }
+            $taxo_list .= '</ul>';
+        } else {
+            $taxo_list = '<em>Aucune</em>';
+        }
 
         // Ligne tableau
         echo '<tr>';
@@ -78,6 +91,7 @@ function npo_render_page() {
         echo '<td>' . $plugins_list . '</td>';
         echo '<td>' . $user_list . '</td>';
         echo '<td>' . $stats_list . '</td>';
+        echo '<td>' . $taxo_list . '</td>';
         echo '</tr>';
 
         restore_current_blog();
