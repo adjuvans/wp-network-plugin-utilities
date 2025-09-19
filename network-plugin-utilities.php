@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Network Plugin Utilities (MU)
-Description: Liste les sites du réseau avec plugins locaux, utilisateurs, stats et taxonomies.
+Description: Liste les sites du réseau avec plugins locaux, utilisateurs, stats, taxonomies et infos techniques (thème, version WP, langue, médias, dernière mise à jour).
 Author: Cyrille de Gourcy <cyrille@gourcy.net>
-Version: 1.4
+Version: 1.5
 Text Domain: rdc-core-mu-utilities
 */
 
@@ -37,6 +37,7 @@ class NPO_List_Table extends WP_List_Table {
     public function get_columns() {
         return [
             'site'      => __( 'Site', 'rdc-core-mu-utilities' ),
+            'infos'     => __( 'Infos techniques', 'rdc-core-mu-utilities' ),
             'users'     => __( 'Utilisateurs', 'rdc-core-mu-utilities' ),
             'contents'  => __( 'Contenus', 'rdc-core-mu-utilities' ),
             'taxos'     => __( 'Taxonomies', 'rdc-core-mu-utilities' ),
@@ -63,7 +64,7 @@ class NPO_List_Table extends WP_List_Table {
             switch_to_blog( $site->blog_id );
             $admin_url = get_admin_url();
 
-            // Infos site
+            // Infos site (nom + URL)
             $site_name = sprintf(
                 '<strong><a href="%s">%s</a></strong><br><a href="%s" target="_blank">%s</a>',
                 esc_url( $admin_url ),
@@ -72,7 +73,7 @@ class NPO_List_Table extends WP_List_Table {
                 esc_html( get_site_url() )
             );
 
-            // Plugins locaux (liens vers la page plugins du site)
+            // Plugins locaux
             $active_plugins = get_option( 'active_plugins', [] );
             $local_plugins  = array_diff( $active_plugins, $network_plugins );
             if ( ! empty( $local_plugins ) ) {
@@ -85,7 +86,7 @@ class NPO_List_Table extends WP_List_Table {
                 $plugins_list = '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
             }
 
-            // Utilisateurs (login cliquable vers édition)
+            // Utilisateurs
             $users = get_users([ 'blog_id' => $site->blog_id ]);
             if ( $users ) {
                 $user_list = '<ul>';
@@ -98,7 +99,7 @@ class NPO_List_Table extends WP_List_Table {
                 $user_list = '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
             }
 
-            // Contenus (CPT → cliquables)
+            // Contenus (CPT publics)
             $post_types = get_post_types([ 'public' => true ], 'objects');
             $contents_list = '<ul>';
             foreach ( $post_types as $pt ) {
@@ -108,7 +109,7 @@ class NPO_List_Table extends WP_List_Table {
             }
             $contents_list .= '</ul>';
 
-            // Taxos (lien vers gestion des termes)
+            // Taxonomies
             $taxonomies = get_taxonomies([ 'public' => true ], 'objects' );
             if ( $taxonomies ) {
                 $taxo_list = '<ul>';
@@ -123,8 +124,61 @@ class NPO_List_Table extends WP_List_Table {
                 $taxo_list = '<em>' . __( 'Aucune', 'rdc-core-mu-utilities' ) . '</em>';
             }
 
+            // Infos techniques
+            $theme = wp_get_theme();
+            $theme_info = sprintf(
+                '<a href="%s">%s</a> (v%s)',
+                esc_url( $admin_url . 'themes.php' ),
+                esc_html( $theme->get('Name') ),
+                esc_html( $theme->get('Version') )
+            );
+
+            global $wp_version;
+            $wp_info = 'WordPress ' . esc_html( $wp_version );
+
+            $lang = get_locale();
+
+            // Comptage des médias
+            $total_attachments = wp_count_posts( 'attachment' );
+
+            // Pièces jointes (tous statuts)
+            $attachments_total = 0;
+            foreach ( (array) $total_attachments as $status => $count ) {
+                $attachments_total += $count;
+            }
+
+            // Médias valides (inherit + publish)
+            $valid_media_count = 0;
+            foreach ( ['inherit','publish'] as $status ) {
+                if ( isset( $total_attachments->$status ) ) {
+                    $valid_media_count += $total_attachments->$status;
+                }
+            }
+
+            // "Fichiers média" = équivalent affichage WP (inherit uniquement)
+            $media_files = isset( $total_attachments->inherit ) ? (int) $total_attachments->inherit : 0;
+
+            // Dernier contenu publié
+            $last_post_date = get_lastpostdate( 'blog' );
+
+            $infos = '<ul>';
+            $infos .= '<li>' . __( 'Thème', 'rdc-core-mu-utilities' ) . ': ' . $theme_info . '</li>';
+            $infos .= '<li>' . __( 'Version', 'rdc-core-mu-utilities' ) . ': ' . $wp_info . '</li>';
+            $infos .= '<li>' . __( 'Langue', 'rdc-core-mu-utilities' ) . ': ' . esc_html( $lang ) . '</li>';
+            $infos .= '<li>' . __( 'Pièces jointes (total)', 'rdc-core-mu-utilities' ) . ': ' . intval( $attachments_total ) . '</li>';
+            //$infos .= '<li>' . __( 'Médias valides', 'rdc-core-mu-utilities' ) . ': ' . intval( $valid_media_count ) . '</li>';
+            //$infos .= '<li>' . __( 'Fichiers média', 'rdc-core-mu-utilities' ) . ': ' . intval( $media_files ) . '</li>';
+            $infos .= '<li><span title="' . esc_attr__( 'Médias avec statut inherit ou publish (utilisables)', 'rdc-core-mu-utilities' ) . '">'
+                . __( 'Médias valides', 'rdc-core-mu-utilities' ) . '</span>: ' . intval( $valid_media_count ) . '</li>';
+
+            $infos .= '<li><span title="' . esc_attr__( 'Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement', 'rdc-core-mu-utilities' ) . '">'
+                . __( 'Fichiers média', 'rdc-core-mu-utilities' ) . '</span>: ' . intval( $media_files ) . '</li>';
+            $infos .= '<li>' . __( 'Dernier contenu', 'rdc-core-mu-utilities' ) . ': ' . esc_html( $last_post_date ?: __( 'N/A', 'rdc-core-mu-utilities' ) ) . '</li>';
+            $infos .= '</ul>';
+
             $data[] = [
                 'site'     => $site_name,
+                'infos'    => $infos,
                 'users'    => $user_list,
                 'contents' => $contents_list,
                 'taxos'    => $taxo_list,
@@ -179,15 +233,22 @@ add_action('admin_head', function() {
                 word-wrap: break-word;
             }
             .wp-list-table th.column-site,
-            .wp-list-table td.column-site { width: 22%; }
+            .wp-list-table td.column-site { width: 18%; }
+            .wp-list-table th.column-infos,
+            .wp-list-table td.column-infos { width: 18%; }
             .wp-list-table th.column-users,
-            .wp-list-table td.column-users { width: 18%; }
+            .wp-list-table td.column-users { width: 16%; }
             .wp-list-table th.column-contents,
-            .wp-list-table td.column-contents { width: 20%; }
+            .wp-list-table td.column-contents { width: 16%; }
             .wp-list-table th.column-taxos,
-            .wp-list-table td.column-taxos { width: 20%; }
+            .wp-list-table td.column-taxos { width: 16%; }
             .wp-list-table th.column-plugins,
-            .wp-list-table td.column-plugins { width: 20%; }
+            .wp-list-table td.column-plugins { width: 16%; }
+            
+            .wp-list-table span[title] {
+                cursor: help;
+                border-bottom: 1px dotted #666; /* optionnel : souligne pour indiquer l’info-bulle */
+            }
         </style>';
     }
 });
