@@ -10,7 +10,7 @@ Text Domain: rdc-core-mu-utilities
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 add_action('network_admin_menu', function() {
-    add_submenu_page(
+    $hook = add_submenu_page(
         'sites.php',
         esc_html__( 'Analyse du réseau (MU)', 'rdc-core-mu-utilities' ),
         esc_html__( 'Analyse du réseau (MU)', 'rdc-core-mu-utilities' ),
@@ -18,7 +18,20 @@ add_action('network_admin_menu', function() {
         'network-plugins-overview',
         'npo_render_page'
     );
+
+    // Activer les "Options de l’écran"
+    add_action("load-$hook", function() {
+        add_screen_option('per_page', [
+            'label'   => __('Sites par page', 'rdc-core-mu-utilities'),
+            'default' => 20,
+            'option'  => 'sites_per_page',
+        ]);
+    });
 });
+
+add_filter('set-screen-option', function($status, $option, $value) {
+    return $value;
+}, 10, 3);
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -51,10 +64,16 @@ class NPO_List_Table extends WP_List_Table {
         ];
     }
 
+    public function get_hidden_columns() {
+        // toutes les colonnes sont masquables via "Options de l’écran"
+        return [];
+    }
+
     public function prepare_items() {
         $columns  = $this->get_columns();
+        $hidden   = get_hidden_columns($this->screen);
         $sortable = $this->get_sortable_columns();
-        $this->_column_headers = [$columns, [], $sortable];
+        $this->_column_headers = [$columns, $hidden, $sortable];
 
         $network_plugins = array_keys( get_site_option( 'active_sitewide_plugins', [] ) );
         $sites = get_sites([ 'number' => 0 ]);
@@ -64,7 +83,7 @@ class NPO_List_Table extends WP_List_Table {
             switch_to_blog( $site->blog_id );
             $admin_url = get_admin_url();
 
-            // Infos site (nom + URL)
+            // Infos site
             $site_name = sprintf(
                 '<strong><a href="%s">%s</a></strong><br><a href="%s" target="_blank">%s</a>',
                 esc_url( $admin_url ),
@@ -76,15 +95,11 @@ class NPO_List_Table extends WP_List_Table {
             // Plugins locaux
             $active_plugins = get_option( 'active_plugins', [] );
             $local_plugins  = array_diff( $active_plugins, $network_plugins );
-            if ( ! empty( $local_plugins ) ) {
-                $plugins_list = '<ul>';
-                foreach ( $local_plugins as $plugin ) {
-                    $plugins_list .= '<li><a href="' . esc_url( $admin_url . 'plugins.php' ) . '" target="_blank">' . esc_html( $plugin ) . '</a></li>';
-                }
-                $plugins_list .= '</ul>';
-            } else {
-                $plugins_list = '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
+            $plugins_list   = $local_plugins ? '<ul>' : '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
+            foreach ( $local_plugins as $plugin ) {
+                $plugins_list .= '<li><a href="' . esc_url( $admin_url . 'plugins.php' ) . '" target="_blank">' . esc_html( $plugin ) . '</a></li>';
             }
+            if ($local_plugins) $plugins_list .= '</ul>';
 
             // Utilisateurs
             $users = get_users([ 'blog_id' => $site->blog_id ]);
@@ -99,52 +114,38 @@ class NPO_List_Table extends WP_List_Table {
                 $user_list = '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
             }
 
-            // Contenus (CPT publics)
+            // Contenus (CPT regroupés)
             $post_types = get_post_types([], 'objects');
-
             $builtin = [];
             $custom  = [];
-
             foreach ($post_types as $pt) {
-                // On ignore les types purement techniques
-                if ( in_array($pt->name, ['revision', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache']) ) {
-                    continue;
-                }
-
+                if ( in_array($pt->name, ['revision','nav_menu_item','custom_css','customize_changeset','oembed_cache']) ) continue;
                 $count = wp_count_posts($pt->name)->publish ?? 0;
                 $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'
-                    . esc_html($pt->labels->name) . '</a>: ' . intval($count) . '</li>';
-
-                if ($pt->_builtin) {
-                    $builtin[] = $item;
-                } else {
-                    $custom[]  = $item;
-                }
+                       . esc_html($pt->labels->name) . '</a>: ' . intval($count) . '</li>';
+                if ($pt->_builtin) $builtin[] = $item; else $custom[] = $item;
             }
-
-            $contents_list  = '<ul>';
-            if ($builtin) {
-                $contents_list .= '<li><strong>' . __( 'Types natifs', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $builtin) . '</ul></li>';
-            }
-            if ($custom) {
-                $contents_list .= '<li><strong>' . __( 'Types personnalisés', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $custom) . '</ul></li>';
-            }
+            $contents_list = '<ul>';
+            if ($builtin) $contents_list .= '<li><strong>' . __( 'Types natifs', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $builtin) . '</ul></li>';
+            if ($custom)  $contents_list .= '<li><strong>' . __( 'Types personnalisés', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $custom) . '</ul></li>';
             $contents_list .= '</ul>';
 
-            // Taxonomies
-            $taxonomies = get_taxonomies([ 'public' => true ], 'objects' );
-            if ( $taxonomies ) {
-                $taxo_list = '<ul>';
-                foreach ( $taxonomies as $tax ) {
-                    $terms = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
-                    $count = is_array($terms) ? count($terms) : 0;
-                    $taxo_list .= '<li><a href="' . esc_url( $admin_url . 'edit-tags.php?taxonomy=' . $tax->name ) . '" target="_blank">'
-                        . esc_html( $tax->labels->name ) . '</a>: ' . intval($count) . '</li>';
-                }
-                $taxo_list .= '</ul>';
-            } else {
-                $taxo_list = '<em>' . __( 'Aucune', 'rdc-core-mu-utilities' ) . '</em>';
+            // Taxonomies regroupées
+            $taxonomies = get_taxonomies([], 'objects');
+            $tax_builtin = [];
+            $tax_custom  = [];
+            foreach ($taxonomies as $tax) {
+                if ( in_array($tax->name, ['nav_menu','link_category','post_format']) ) continue;
+                $terms = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
+                $count = is_array($terms) ? count($terms) : 0;
+                $item  = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax->name) . '" target="_blank">'
+                       . esc_html($tax->labels->name) . '</a>: ' . intval($count) . '</li>';
+                if ($tax->_builtin) $tax_builtin[] = $item; else $tax_custom[] = $item;
             }
+            $taxo_list = '<ul>';
+            if ($tax_builtin) $taxo_list .= '<li><strong>' . __( 'Taxonomies natives', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $tax_builtin) . '</ul></li>';
+            if ($tax_custom)  $taxo_list .= '<li><strong>' . __( 'Taxonomies personnalisées', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $tax_custom) . '</ul></li>';
+            $taxo_list .= '</ul>';
 
             // Infos techniques
             $theme = wp_get_theme();
@@ -154,46 +155,28 @@ class NPO_List_Table extends WP_List_Table {
                 esc_html( $theme->get('Name') ),
                 esc_html( $theme->get('Version') )
             );
-
             global $wp_version;
             $wp_info = 'WordPress ' . esc_html( $wp_version );
-
             $lang = get_locale();
-
-            // Comptage des médias
-            $total_attachments = wp_count_posts( 'attachment' );
-
-            // Pièces jointes (tous statuts)
-            $attachments_total = 0;
-            foreach ( (array) $total_attachments as $status => $count ) {
-                $attachments_total += $count;
-            }
-
-            // Médias valides (inherit + publish)
+            $total_attachments = wp_count_posts('attachment');
+            $attachments_total = array_sum((array) $total_attachments);
             $valid_media_count = 0;
             foreach ( ['inherit','publish'] as $status ) {
-                if ( isset( $total_attachments->$status ) ) {
-                    $valid_media_count += $total_attachments->$status;
-                }
+                if ( isset($total_attachments->$status) ) $valid_media_count += $total_attachments->$status;
             }
-
-            // "Fichiers média" = équivalent affichage WP (inherit uniquement)
-            $media_files = isset( $total_attachments->inherit ) ? (int) $total_attachments->inherit : 0;
-
-            // Dernier contenu publié
-            $last_post_date = get_lastpostdate( 'blog' );
+            $media_files = isset($total_attachments->inherit) ? (int) $total_attachments->inherit : 0;
+            $last_post_date = get_lastpostdate('blog');
 
             $infos = '<ul>';
             $infos .= '<li>' . __( 'Thème', 'rdc-core-mu-utilities' ) . ': ' . $theme_info . '</li>';
             $infos .= '<li>' . __( 'Version', 'rdc-core-mu-utilities' ) . ': ' . $wp_info . '</li>';
             $infos .= '<li>' . __( 'Langue', 'rdc-core-mu-utilities' ) . ': ' . esc_html( $lang ) . '</li>';
-            $infos .= '<li>' . __( 'Pièces jointes (total)', 'rdc-core-mu-utilities' ) . ': ' . intval( $attachments_total ) . '</li>';
-            $infos .= '<li><span title="' . esc_attr__( 'Médias avec statut inherit ou publish (utilisables)', 'rdc-core-mu-utilities' ) . '">'
-                . __( 'Médias valides', 'rdc-core-mu-utilities' ) . '</span>: ' . intval( $valid_media_count ) . '</li>';
-
-            $infos .= '<li><span title="' . esc_attr__( 'Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement', 'rdc-core-mu-utilities' ) . '">'
-                . __( 'Fichiers média', 'rdc-core-mu-utilities' ) . '</span>: ' . intval( $media_files ) . '</li>';
-            $infos .= '<li>' . __( 'Dernier contenu', 'rdc-core-mu-utilities' ) . ': ' . esc_html( $last_post_date ?: __( 'N/A', 'rdc-core-mu-utilities' ) ) . '</li>';
+            $infos .= '<li>' . __( 'Pièces jointes (total)', 'rdc-core-mu-utilities' ) . ': ' . intval($attachments_total) . '</li>';
+            $infos .= '<li><span title="' . esc_attr__( 'Médias avec statut inherit ou publish (utilisables)', 'rdc-core-mu-utilities' ) . '" style="cursor:help;border-bottom:1px dotted #666;">'
+                    . __( 'Médias valides', 'rdc-core-mu-utilities' ) . '</span>: ' . intval($valid_media_count) . '</li>';
+            $infos .= '<li><span title="' . esc_attr__( 'Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement', 'rdc-core-mu-utilities' ) . '" style="cursor:help;border-bottom:1px dotted #666;">'
+                    . __( 'Fichiers média', 'rdc-core-mu-utilities' ) . '</span>: ' . intval($media_files) . '</li>';
+            $infos .= '<li>' . __( 'Dernier contenu', 'rdc-core-mu-utilities' ) . ': ' . esc_html($last_post_date ?: __( 'N/A', 'rdc-core-mu-utilities' )) . '</li>';
             $infos .= '</ul>';
 
             $data[] = [
@@ -208,10 +191,10 @@ class NPO_List_Table extends WP_List_Table {
             restore_current_blog();
         }
 
-        // Pagination
-        $per_page = 20;
+        // Pagination (selon les préférences "Options de l’écran")
+        $per_page     = $this->get_items_per_page('sites_per_page', 20);
         $current_page = $this->get_pagenum();
-        $total_items = count($data);
+        $total_items  = count($data);
 
         $this->items = array_slice($data, (($current_page-1)*$per_page), $per_page);
         $this->set_pagination_args([
@@ -236,7 +219,6 @@ function npo_render_page() {
 
     echo '</div>';
 }
-
 add_action('admin_head', function() {
     $screen = get_current_screen();
     if ( $screen && $screen->id === 'sites_page_network-plugins-overview-network' ) {
