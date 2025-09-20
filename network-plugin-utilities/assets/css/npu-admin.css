@@ -1,0 +1,39 @@
+.wp-list-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.wp-list-table th,
+.wp-list-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+.wp-list-table th.column-site,
+.wp-list-table td.column-site {
+  width: 18%;
+}
+.wp-list-table th.column-infos,
+.wp-list-table td.column-infos {
+  width: 18%;
+}
+.wp-list-table th.column-users,
+.wp-list-table td.column-users {
+  width: 16%;
+}
+.wp-list-table th.column-contents,
+.wp-list-table td.column-contents {
+  width: 16%;
+}
+.wp-list-table th.column-taxos,
+.wp-list-table td.column-taxos {
+  width: 16%;
+}
+.wp-list-table th.column-plugins,
+.wp-list-table td.column-plugins {
+  width: 16%;
+}
+.wp-list-table span[title] {
+  cursor: help;
+  border-bottom: 1px dotted #666;
+}

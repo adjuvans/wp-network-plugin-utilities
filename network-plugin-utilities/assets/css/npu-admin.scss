@@ -1,0 +1,30 @@
+.wp-list-table {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: top;
+        word-wrap: break-word;
+    }
+
+    th.column-site,
+    td.column-site { width: 18%; }
+    th.column-infos,
+    td.column-infos { width: 18%; }
+    th.column-users,
+    td.column-users { width: 16%; }
+    th.column-contents,
+    td.column-contents { width: 16%; }
+    th.column-taxos,
+    td.column-taxos { width: 16%; }
+    th.column-plugins,
+    td.column-plugins { width: 16%; }
+
+    span[title] {
+        cursor: help;
+        border-bottom: 1px dotted #666;
+    }
+}
