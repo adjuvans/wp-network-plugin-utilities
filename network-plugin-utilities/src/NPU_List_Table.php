@@ -32,13 +32,12 @@ class NPU_List_Table extends WP_List_Table {
     }
 
     public function get_hidden_columns() {
-        // toutes les colonnes sont masquables via "Options de l’écran"
-        return [];
+        return [ 'cpt_custom', 'taxo_custom' ];
     }
 
     public function prepare_items() {
         $columns  = $this->get_columns();
-        $hidden   = get_hidden_columns($this->screen);
+        $hidden   = $this->get_hidden_columns();
         $sortable = $this->get_sortable_columns();
         $this->_column_headers = [$columns, $hidden, $sortable];
 
