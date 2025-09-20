@@ -32,12 +32,11 @@ class NPU_List_Table extends WP_List_Table {
     }
 
     public function get_hidden_columns() {
-        // ✅ cachées par défaut mais visibles dans "Options de l’écran"
+        // cachées par défaut mais visibles dans "Options de l’écran"
         return [ 'cpt_custom', 'taxo_custom' ];
     }
 
     public function prepare_items() {
-        // ✅ prend en compte les colonnes visibles/cachées définies par l’utilisateur
         $columns  = $this->get_columns();
         $hidden   = get_hidden_columns($this->screen);
         $sortable = $this->get_sortable_columns();
@@ -49,6 +48,7 @@ class NPU_List_Table extends WP_List_Table {
         $data = [];
         foreach ( $sites as $site ) {
             switch_to_blog( $site->blog_id );
+            do_action('init');
             $admin_url = get_admin_url();
 
             // Infos site
