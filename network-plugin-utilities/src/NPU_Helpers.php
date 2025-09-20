@@ -56,7 +56,7 @@ class NPU_Helpers {
 
             $file = str_replace(ABSPATH, '', $step['file']);
 
-            // ⛔ ignorer ce MU-plugin
+            // ignorer ce plugin
             if (strpos($file, 'wp-content/mu-plugins/network-plugin-utilities') === 0) {
                 continue;
             }

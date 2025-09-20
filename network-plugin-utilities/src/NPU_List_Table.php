@@ -48,7 +48,7 @@ class NPU_List_Table extends WP_List_Table {
         $data = [];
         foreach ( $sites as $site ) {
             switch_to_blog( $site->blog_id );
-            do_action('init');
+
             $admin_url = get_admin_url();
 
             // Infos site
