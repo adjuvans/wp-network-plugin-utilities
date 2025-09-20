@@ -32,14 +32,16 @@ class NPU_List_Table extends WP_List_Table {
     }
 
     public function get_hidden_columns() {
+        // ✅ cachées par défaut mais visibles dans "Options de l’écran"
         return [ 'cpt_custom', 'taxo_custom' ];
     }
 
     public function prepare_items() {
+        // ✅ prend en compte les colonnes visibles/cachées définies par l’utilisateur
         $columns  = $this->get_columns();
-        $hidden   = $this->get_hidden_columns();
+        $hidden   = get_hidden_columns($this->screen);
         $sortable = $this->get_sortable_columns();
-        $this->_column_headers = [$columns, $hidden, $sortable];
+        $this->_column_headers = [ $columns, $hidden, $sortable ];
 
         $network_plugins = array_keys( get_site_option( 'active_sitewide_plugins', [] ) );
         $sites = get_sites([ 'number' => 0 ]);
@@ -165,7 +167,7 @@ class NPU_List_Table extends WP_List_Table {
             restore_current_blog();
         }
 
-        // Pagination (selon les préférences "Options de l’écran")
+        // Pagination
         $per_page     = $this->get_items_per_page('sites_per_page', 20);
         $current_page = $this->get_pagenum();
         $total_items  = count($data);

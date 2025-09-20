@@ -24,10 +24,17 @@ class NPU_Helpers {
         );
 
         add_action("load-$hook", function() {
+            // Option "éléments par page"
             add_screen_option('per_page', [
                 'label'   => __('Sites par page', 'rdc-core-mu-utilities'),
                 'default' => 20,
                 'option'  => 'sites_per_page',
+            ]);
+
+            // Indiquer que l’écran supporte les colonnes personnalisées
+            add_screen_option('columns', [
+                'label'   => __('Colonnes', 'rdc-core-mu-utilities'),
+                'default' => 5,
             ]);
         });
     }
@@ -57,5 +64,4 @@ class NPU_Helpers {
 
         echo '</div>';
     }
-
-} 
+}
