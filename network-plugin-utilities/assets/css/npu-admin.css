@@ -11,27 +11,35 @@
 }
 .wp-list-table th.column-site,
 .wp-list-table td.column-site {
-  width: 18%;
+  width: 14% !important;
 }
 .wp-list-table th.column-infos,
 .wp-list-table td.column-infos {
-  width: 18%;
+  width: 14% !important;
 }
 .wp-list-table th.column-users,
 .wp-list-table td.column-users {
-  width: 16%;
+  width: 12% !important;
 }
-.wp-list-table th.column-contents,
-.wp-list-table td.column-contents {
-  width: 16%;
+.wp-list-table th.column-cpt_builtin,
+.wp-list-table td.column-cpt_builtin {
+  width: 12% !important;
 }
-.wp-list-table th.column-taxos,
-.wp-list-table td.column-taxos {
-  width: 16%;
+.wp-list-table th.column-cpt_custom,
+.wp-list-table td.column-cpt_custom {
+  width: 12% !important;
+}
+.wp-list-table th.column-taxo_builtin,
+.wp-list-table td.column-taxo_builtin {
+  width: 12% !important;
+}
+.wp-list-table th.column-taxo_custom,
+.wp-list-table td.column-taxo_custom {
+  width: 12% !important;
 }
 .wp-list-table th.column-plugins,
 .wp-list-table td.column-plugins {
-  width: 16%;
+  width: 12% !important;
 }
 .wp-list-table span[title] {
   cursor: help;

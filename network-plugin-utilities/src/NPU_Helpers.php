@@ -11,6 +11,10 @@ class NPU_Helpers {
         add_filter('set-screen-option', [__CLASS__, 'set_screen_option'], 10, 3);
         // CSS
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
+
+        add_filter( 'register_post_type_args', [ __CLASS__, 'track_cpt_origin' ], 10, 2 );
+        add_filter( 'register_taxonomy_args', [ __CLASS__, 'track_taxo_origin' ], 10, 2 );
+
     }
 
     public static function register_menu() {
@@ -63,5 +67,65 @@ class NPU_Helpers {
         $table->display();
 
         echo '</div>';
+    }
+
+    public static function track_cpt_origin( $args, $post_type ) {
+        global $npu_cpt_origins;
+        if ( ! isset($npu_cpt_origins) ) {
+            $npu_cpt_origins = [];
+        }
+
+        $npu_cpt_origins[$post_type] = self::detect_origin();
+        return $args;
+    }
+
+    public static function track_taxo_origin( $args, $taxonomy ) {
+        global $npu_taxo_origins;
+        if ( ! isset($npu_taxo_origins) ) {
+            $npu_taxo_origins = [];
+        }
+
+        $npu_taxo_origins[$taxonomy] = self::detect_origin();
+        return $args;
+    }
+
+    /**
+     * Essaie de deviner l’origine (plugin, thème, MU) via la backtrace
+     */
+    protected static function detect_origin() {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 30);
+
+        foreach ($trace as $step) {
+            if (empty($step['file'])) {
+                continue;
+            }
+
+            $file = str_replace(ABSPATH, '', $step['file']);
+
+            // ignorer plugin lui-même
+            if (strpos($file, 'wp-content/mu-plugins/network-plugin-utilities') === 0) {
+                continue;
+            }
+
+            // Plugins
+            if (strpos($file, 'wp-content/plugins/') === 0) {
+                $parts = explode('/', $file);
+                return 'plugin: ' . $parts[2]; // ex. woocommerce
+            }
+
+            // MU-plugins
+            if (strpos($file, 'wp-content/mu-plugins/') === 0) {
+                $parts = explode('/', $file);
+                return 'mu-plugin: ' . $parts[2];
+            }
+
+            // Thèmes
+            if (strpos($file, 'wp-content/themes/') === 0) {
+                $parts = explode('/', $file);
+                return 'theme: ' . $parts[2];
+            }
+        }
+
+        return 'core';
     }
 }

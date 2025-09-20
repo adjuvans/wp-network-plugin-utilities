@@ -75,7 +75,7 @@ class NPU_List_Table extends WP_List_Table {
                 $user_list = '<ul>';
                 foreach ( $users as $user ) {
                     $roles = implode(', ', $user->roles);
-                    $user_list .= '<li><a href="' . esc_url( $admin_url . 'user-edit.php?user_id=' . $user->ID ) . '" target="_blank">' . esc_html( $user->user_login ) . '</a> (' . esc_html( $roles ) . ')</li>';
+                    $user_list .= '<li><a href="' . esc_url( $admin_url . 'user-edit.php?user_id=' . $user->ID ) . '" target="_blank">' . esc_html( $user->user_login ) . '</a> <small style="color:#666;">(' . esc_html( $roles ) . ')</small></li>';
                 }
                 $user_list .= '</ul>';
             } else {
@@ -87,14 +87,23 @@ class NPU_List_Table extends WP_List_Table {
             $cpt_builtin = [];
             $cpt_custom  = [];
 
+            global $npu_cpt_origins;
+
             foreach ($post_types as $pt) {
                 if (in_array($pt->name, ['revision','nav_menu_item','custom_css','customize_changeset','oembed_cache'])) continue;
 
-                $count = wp_count_posts($pt->name)->publish ?? 0;
-                $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'
-                    . esc_html($pt->labels->name) . '</a>: ' . intval($count) . '</li>';
+                $count  = wp_count_posts($pt->name)->publish ?? 0;
+                $origin = $npu_cpt_origins[$pt->name] ?? ($pt->_builtin ? 'core' : 'inconnu');
 
-                if ($pt->_builtin) $cpt_builtin[] = $item; else $cpt_custom[] = $item;
+                $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'
+                    . esc_html($pt->labels->name) . '</a>: ' . intval($count)
+                    . ' <small style="color:#666;">(' . esc_html($origin) . ')</small></li>';
+
+                if ($pt->_builtin) {
+                    $cpt_builtin[] = $item;
+                } else {
+                    $cpt_custom[]  = $item;
+                }
             }
 
             $cpt_builtin_list = $cpt_builtin ? '<ul>' . implode('', $cpt_builtin) . '</ul>' : '<em>Aucun</em>';
@@ -105,16 +114,24 @@ class NPU_List_Table extends WP_List_Table {
             $tax_builtin  = [];
             $tax_custom   = [];
 
+            global $npu_taxo_origins;
+
             foreach ($taxonomies as $tax) {
                 if (in_array($tax->name, ['nav_menu','link_category','post_format'])) continue;
 
-                $terms = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
-                $count = is_array($terms) ? count($terms) : 0;
+                $terms  = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
+                $count  = is_array($terms) ? count($terms) : 0;
+                $origin = $npu_taxo_origins[$tax->name] ?? ($tax->_builtin ? 'core' : 'inconnu');
 
                 $item = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax->name) . '" target="_blank">'
-                    . esc_html($tax->labels->name) . '</a>: ' . intval($count) . '</li>';
+                    . esc_html($tax->labels->name) . '</a>: ' . intval($count)
+                    . ' <small style="color:#666;">(' . esc_html($origin) . ')</small></li>';
 
-                if ($tax->_builtin) $tax_builtin[] = $item; else $tax_custom[] = $item;
+                if ($tax->_builtin) {
+                    $tax_builtin[] = $item;
+                } else {
+                    $tax_custom[]  = $item;
+                }
             }
 
             $tax_builtin_list = $tax_builtin ? '<ul>' . implode('', $tax_builtin) . '</ul>' : '<em>Aucune</em>';

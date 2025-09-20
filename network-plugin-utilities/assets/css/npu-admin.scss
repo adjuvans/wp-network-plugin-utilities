@@ -11,17 +11,28 @@
     }
 
     th.column-site,
-    td.column-site { width: 18%; }
+    td.column-site { width: 14% !important; }
+
     th.column-infos,
-    td.column-infos { width: 18%; }
+    td.column-infos { width: 14% !important; }
+
     th.column-users,
-    td.column-users { width: 16%; }
-    th.column-contents,
-    td.column-contents { width: 16%; }
-    th.column-taxos,
-    td.column-taxos { width: 16%; }
+    td.column-users { width: 12% !important; }
+
+    th.column-cpt_builtin,
+    td.column-cpt_builtin { width: 12% !important; }
+
+    th.column-cpt_custom,
+    td.column-cpt_custom { width: 12% !important; }
+
+    th.column-taxo_builtin,
+    td.column-taxo_builtin { width: 12% !important; }
+
+    th.column-taxo_custom,
+    td.column-taxo_custom { width: 12% !important; }
+
     th.column-plugins,
-    td.column-plugins { width: 16%; }
+    td.column-plugins { width: 12% !important; }
 
     span[title] {
         cursor: help;
