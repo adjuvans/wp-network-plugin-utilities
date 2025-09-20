@@ -14,12 +14,14 @@ class NPU_List_Table extends WP_List_Table {
 
     public function get_columns() {
         return [
-            'site'      => __( 'Site', 'rdc-core-mu-utilities' ),
-            'infos'     => __( 'Infos techniques', 'rdc-core-mu-utilities' ),
-            'users'     => __( 'Utilisateurs', 'rdc-core-mu-utilities' ),
-            'contents'  => __( 'Contenus', 'rdc-core-mu-utilities' ),
-            'taxos'     => __( 'Taxonomies', 'rdc-core-mu-utilities' ),
-            'plugins'   => __( 'Plugins locaux', 'rdc-core-mu-utilities' ),
+            'site'           => __( 'Site', 'rdc-core-mu-utilities' ),
+            'infos'          => __( 'Infos techniques', 'rdc-core-mu-utilities' ),
+            'users'          => __( 'Utilisateurs', 'rdc-core-mu-utilities' ),
+            'cpt_builtin'    => __( 'CPT natifs', 'rdc-core-mu-utilities' ),
+            'cpt_custom'     => __( 'CPT personnalisés', 'rdc-core-mu-utilities' ),
+            'taxo_builtin'   => __( 'Taxonomies natives', 'rdc-core-mu-utilities' ),
+            'taxo_custom'    => __( 'Taxonomies personnalisées', 'rdc-core-mu-utilities' ),
+            'plugins'        => __( 'Plugins locaux', 'rdc-core-mu-utilities' ),
         ];
     }
 
@@ -79,38 +81,44 @@ class NPU_List_Table extends WP_List_Table {
                 $user_list = '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
             }
 
-            // Contenus (CPT regroupés)
+            // CPT
             $post_types = get_post_types([], 'objects');
-            $builtin = [];
-            $custom  = [];
+            $cpt_builtin = [];
+            $cpt_custom  = [];
+
             foreach ($post_types as $pt) {
-                if ( in_array($pt->name, ['revision','nav_menu_item','custom_css','customize_changeset','oembed_cache']) ) continue;
+                if (in_array($pt->name, ['revision','nav_menu_item','custom_css','customize_changeset','oembed_cache'])) continue;
+
                 $count = wp_count_posts($pt->name)->publish ?? 0;
                 $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'
-                       . esc_html($pt->labels->name) . '</a>: ' . intval($count) . '</li>';
-                if ($pt->_builtin) $builtin[] = $item; else $custom[] = $item;
-            }
-            $contents_list = '<ul>';
-            if ($builtin) $contents_list .= '<li><strong>' . __( 'Types natifs', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $builtin) . '</ul></li>';
-            if ($custom)  $contents_list .= '<li><strong>' . __( 'Types personnalisés', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $custom) . '</ul></li>';
-            $contents_list .= '</ul>';
+                    . esc_html($pt->labels->name) . '</a>: ' . intval($count) . '</li>';
 
-            // Taxonomies regroupées
-            $taxonomies = get_taxonomies([], 'objects');
-            $tax_builtin = [];
-            $tax_custom  = [];
+                if ($pt->_builtin) $cpt_builtin[] = $item; else $cpt_custom[] = $item;
+            }
+
+            $cpt_builtin_list = $cpt_builtin ? '<ul>' . implode('', $cpt_builtin) . '</ul>' : '<em>Aucun</em>';
+            $cpt_custom_list  = $cpt_custom  ? '<ul>' . implode('', $cpt_custom)  . '</ul>' : '<em>Aucun</em>';
+
+            // Taxonomies
+            $taxonomies   = get_taxonomies([], 'objects');
+            $tax_builtin  = [];
+            $tax_custom   = [];
+
             foreach ($taxonomies as $tax) {
-                if ( in_array($tax->name, ['nav_menu','link_category','post_format']) ) continue;
+                if (in_array($tax->name, ['nav_menu','link_category','post_format'])) continue;
+
                 $terms = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
                 $count = is_array($terms) ? count($terms) : 0;
-                $item  = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax->name) . '" target="_blank">'
-                       . esc_html($tax->labels->name) . '</a>: ' . intval($count) . '</li>';
+
+                $item = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax->name) . '" target="_blank">'
+                    . esc_html($tax->labels->name) . '</a>: ' . intval($count) . '</li>';
+
                 if ($tax->_builtin) $tax_builtin[] = $item; else $tax_custom[] = $item;
             }
-            $taxo_list = '<ul>';
-            if ($tax_builtin) $taxo_list .= '<li><strong>' . __( 'Taxonomies natives', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $tax_builtin) . '</ul></li>';
-            if ($tax_custom)  $taxo_list .= '<li><strong>' . __( 'Taxonomies personnalisées', 'rdc-core-mu-utilities' ) . '</strong><ul>' . implode('', $tax_custom) . '</ul></li>';
-            $taxo_list .= '</ul>';
+
+            $tax_builtin_list = $tax_builtin ? '<ul>' . implode('', $tax_builtin) . '</ul>' : '<em>Aucune</em>';
+            $tax_custom_list  = $tax_custom  ? '<ul>' . implode('', $tax_custom)  . '</ul>' : '<em>Aucune</em>';
+
 
             // Infos techniques
             $theme = wp_get_theme();
@@ -145,12 +153,14 @@ class NPU_List_Table extends WP_List_Table {
             $infos .= '</ul>';
 
             $data[] = [
-                'site'     => $site_name,
-                'infos'    => $infos,
-                'users'    => $user_list,
-                'contents' => $contents_list,
-                'taxos'    => $taxo_list,
-                'plugins'  => $plugins_list,
+                'site'         => $site_name,
+                'infos'        => $infos,
+                'users'        => $user_list,
+                'cpt_builtin'  => $cpt_builtin_list,
+                'cpt_custom'   => $cpt_custom_list,
+                'taxo_builtin' => $tax_builtin_list,
+                'taxo_custom'  => $tax_custom_list,
+                'plugins'      => $plugins_list,
             ];
 
             restore_current_blog();
