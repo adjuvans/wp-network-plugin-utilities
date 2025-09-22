@@ -2,7 +2,21 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class NPU_List_Table extends WP_List_Table {
+class NPU_Network_Overview extends WP_List_Table {
+
+    /**
+     * Rendu de la page (appelée depuis NPU_Core::register_menu)
+     */
+    public static function render_page() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Vue d’ensemble des sites du réseau', 'rdc-core-mu-utilities') . '</h1>';
+
+        $table = new self();
+        $table->prepare_items();
+        $table->display();
+
+        echo '</div>';
+    }
 
     public function __construct() {
         parent::__construct([
@@ -32,7 +46,6 @@ class NPU_List_Table extends WP_List_Table {
     }
 
     public function get_hidden_columns() {
-        // cachées par défaut mais visibles dans "Options de l’écran"
         return [ 'cpt_custom', 'taxo_custom' ];
     }
 
@@ -46,6 +59,7 @@ class NPU_List_Table extends WP_List_Table {
         $sites = get_sites([ 'number' => 0 ]);
 
         $data = [];
+
         foreach ( $sites as $site ) {
             switch_to_blog( $site->blog_id );
 

@@ -27,6 +27,6 @@ spl_autoload_register(function($class) {
 
 // Init
 add_action('plugins_loaded', function() {
-    NPU_Helpers::init();
+    NPU_Core::init();
     NPU_Network_Sites_Menu::init();
 });

@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class NPU_Helpers {
+class NPU_Core {
 
     public static function init() {
         // Tracker CPT / Taxonomies dès leur enregistrement
@@ -94,18 +94,28 @@ class NPU_Helpers {
      * Menu réseau (pages dans l’admin réseau)
      */
     public static function register_menu() {
-    $top_menu_slug = 'npu-core';
+        $top_menu_slug = 'npu-core';
 
-    // Créer le menu principal
+        // Créer le menu principal (⚠️ pas de callback pour éviter le doublon automatique)
         add_menu_page(
             __( 'NPU core', 'rdc-core-mu-utilities' ),
             __( 'NPU core', 'rdc-core-mu-utilities' ),
             'manage_network_plugins',
             $top_menu_slug,
-            [ __CLASS__, 'render_stat_page' ], // par défaut : page d’analyse
+            [ __CLASS__, 'redirect_to_default_submenu' ],
             'dashicons-admin-generic',
             3
         );
+
+        // 🔹 Supprimer ou renommer le doublon immédiatement
+        global $submenu;
+        if ( isset($submenu[$top_menu_slug][0]) ) {
+            // Variante 1 : renommer 
+            // $submenu[$top_menu_slug][0][0] = __( 'Tableau de bord', 'rdc-core-mu-utilities' );
+
+            // Variante 2 : supprimer
+            unset($submenu[$top_menu_slug][0]);
+        }
 
         // Sous-menu Analyse du réseau
         add_submenu_page(
@@ -114,7 +124,7 @@ class NPU_Helpers {
             __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
             'manage_network_plugins',
             'npu-network-overview',
-            [ __CLASS__, 'render_stat_page' ]
+            [ 'NPU_Network_Overview', 'render_page' ]
         );
 
         // Sous-menu Options NPU
@@ -126,6 +136,23 @@ class NPU_Helpers {
             'npu-settings',
             [ __CLASS__, 'render_options_page' ]
         );
+    }
+
+    /**
+     * Redirige le clic sur le menu parent vers le premier sous-menu (Analyse du réseau)
+     */
+    public static function redirect_to_default_submenu() {
+        wp_safe_redirect(
+            network_admin_url('admin.php?page=npu-network-overview')
+        );
+        exit;
+    }
+
+    /**
+     * Page de stats (admin réseau)
+     */
+    public static function render_stat_page() {
+        NPU_Network_Overview::render_page();
     }
 
     /**
@@ -180,23 +207,5 @@ class NPU_Helpers {
                 '1.0'
             );
         }
-    }
-
-    /**
-     * Rendu de la page principale
-     */
-    public static function render_stat_page() {
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html__('Vue d’ensemble des sites du réseau', 'rdc-core-mu-utilities') . '</h1>';
-
-        if ( class_exists('NPU_List_Table') ) {
-            $table = new NPU_List_Table();
-            $table->prepare_items();
-            $table->display();
-        } else {
-            echo '<p>' . __('Erreur : classe NPU_List_Table manquante.', 'rdc-core-mu-utilities') . '</p>';
-        }
-
-        echo '</div>';
     }
 }
