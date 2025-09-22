@@ -94,38 +94,37 @@ class NPU_Helpers {
      * Menu réseau (pages dans l’admin réseau)
      */
     public static function register_menu() {
-        // Page principale d’analyse
-        $hook = add_submenu_page(
-            'sites.php',
-            __('Analyse du réseau (MU)', 'rdc-core-mu-utilities'),
-            __('Analyse du réseau (MU)', 'rdc-core-mu-utilities'),
+    $top_menu_slug = 'npu-core';
+
+    // Créer le menu principal
+        add_menu_page(
+            __( 'NPU core', 'rdc-core-mu-utilities' ),
+            __( 'NPU core', 'rdc-core-mu-utilities' ),
             'manage_network_plugins',
-            'network-plugins-overview',
-            [__CLASS__, 'render_page']
+            $top_menu_slug,
+            [ __CLASS__, 'render_stat_page' ], // par défaut : page d’analyse
+            'dashicons-admin-generic',
+            3
         );
 
-        // Options d’écran
-        add_action("load-$hook", function() {
-            add_screen_option('per_page', [
-                'label'   => __('Sites par page', 'rdc-core-mu-utilities'),
-                'default' => 20,
-                'option'  => 'sites_per_page',
-            ]);
-
-            add_screen_option('columns', [
-                'label'   => __('Colonnes', 'rdc-core-mu-utilities'),
-                'default' => 5,
-            ]);
-        });
-
-        // Page d’options NPU
+        // Sous-menu Analyse du réseau
         add_submenu_page(
-            'settings.php',
-            __('Options NPU', 'rdc-core-mu-utilities'),
-            __('Options NPU', 'rdc-core-mu-utilities'),
+            $top_menu_slug,
+            __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
+            __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
+            'manage_network_plugins',
+            'npu-network-overview',
+            [ __CLASS__, 'render_stat_page' ]
+        );
+
+        // Sous-menu Options NPU
+        add_submenu_page(
+            $top_menu_slug,
+            __( 'Paramètres', 'rdc-core-mu-utilities' ),
+            __( 'Paramètres', 'rdc-core-mu-utilities' ),
             'manage_network_options',
-            'npu-options',
-            [__CLASS__, 'render_options_page']
+            'npu-settings',
+            [ __CLASS__, 'render_options_page' ]
         );
     }
 
@@ -186,7 +185,7 @@ class NPU_Helpers {
     /**
      * Rendu de la page principale
      */
-    public static function render_page() {
+    public static function render_stat_page() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Vue d’ensemble des sites du réseau', 'rdc-core-mu-utilities') . '</h1>';
 
