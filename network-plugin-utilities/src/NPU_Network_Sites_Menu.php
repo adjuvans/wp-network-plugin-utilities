@@ -26,8 +26,8 @@ class NPU_Network_Sites_Menu {
      */
     protected static function get_sites_list() {
         if ( ! self::is_menu_enabled() ) {
-            return [];
-        }
+        return [];
+    }
 
         $sites = get_sites([
             'public'   => 1,

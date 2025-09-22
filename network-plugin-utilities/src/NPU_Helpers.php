@@ -134,7 +134,8 @@ class NPU_Helpers {
      */
     public static function render_options_page() {
         if ( isset($_POST['npu_save']) && check_admin_referer('npu_save_options') ) {
-            update_site_option('npu_enable_network_menu', ! empty($_POST['npu_enable_network_menu']));
+            update_site_option('npu_enable_network_menu', isset($_POST['npu_enable_network_menu']) ? 1 : 0);
+
             echo '<div class="updated"><p>' . __('Options sauvegardées', 'rdc-core-mu-utilities') . '</p></div>';
         }
 
@@ -149,7 +150,7 @@ class NPU_Helpers {
                         <th scope="row"><?php _e('Activer le menu réseau', 'rdc-core-mu-utilities'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="npu_enable_network_menu" value="1" <?php checked($enabled); ?>>
+                                <input type="checkbox" name="npu_enable_network_menu" value="1" <?php checked($enabled, 1); ?>>
                                 <?php _e('Oui, afficher la liste des sites du réseau', 'rdc-core-mu-utilities'); ?>
                             </label>
                         </td>
