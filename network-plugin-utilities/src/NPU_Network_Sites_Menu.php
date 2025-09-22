@@ -6,7 +6,9 @@ class NPU_Network_Sites_Menu {
 
     public static function init() {
         // Admin : ajouter une meta box dans les menus
-        add_action( 'admin_init', [ __CLASS__, 'add_nav_menu_metabox' ] );
+        //add_action( 'admin_init', [ __CLASS__, 'add_nav_menu_metabox' ] );
+        //add_action( 'admin_head-nav-menus.php', [ __CLASS__, 'add_nav_menu_metabox' ] );
+        add_action( 'load-nav-menus.php', [ __CLASS__, 'add_nav_menu_metabox' ] );
 
         // Shortcode : [network_sites_menu]
         add_shortcode( 'network_sites_menu', [ __CLASS__, 'shortcode_network_sites_menu' ] );
