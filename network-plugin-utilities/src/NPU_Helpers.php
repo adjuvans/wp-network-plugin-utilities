@@ -17,87 +17,13 @@ class NPU_Helpers {
 
         // CSS admin
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
-
-        // Shortcode pour affichage dynamique d'un menu des sites
-        add_shortcode('network_sites_menu', [__CLASS__, 'shortcode_network_sites_menu']);
     }
 
     /**
      * Vérifie si le menu des sites du réseau est activé
      */
     protected static function is_menu_enabled() {
-        // Option stockée en base réseau, activée par défaut
         return (bool) get_site_option('npu_enable_network_menu', true);
-    }
-
-    /**
-     * Récupère les sites du réseau
-     */
-    protected static function get_sites_list() {
-        // Si désactivé via l’option → ne rien renvoyer
-        if ( ! self::is_menu_enabled() ) {
-            return [];
-        }
-
-        $sites = get_sites([
-            'public'   => 1,
-            'archived' => 0,
-            'deleted'  => 0
-        ]);
-
-        $out = [];
-        foreach ( $sites as $site ) {
-            $out[] = [
-                'id'   => $site->blog_id,
-                'url'  => get_site_url( $site->blog_id ),
-                'name' => get_blog_option( $site->blog_id, 'blogname' )
-            ];
-        }
-        return $out;
-    }
-
-    /**
-     * Affiche ou retourne la liste HTML des sites
-     */
-    public static function render_sites_list( $wrapper = 'ul', $class = 'network-sites-menu', $echo = true ) {
-        $sites = self::get_sites_list();
-        if ( empty( $sites ) ) {
-            return '';
-        }
-
-        ob_start();
-        echo '<' . tag_escape( $wrapper ) . ' class="' . esc_attr( $class ) . '">';
-        foreach ( $sites as $site ) {
-            echo '<li><a href="' . esc_url( $site['url'] ) . '">' . esc_html( $site['name'] ) . '</a></li>';
-        }
-        echo '</' . tag_escape( $wrapper ) . '>';
-
-        $html = ob_get_clean();
-
-        if ( $echo ) {
-            echo $html;
-        }
-        return $html;
-    }
-
-    /**
-     * Fonction d’appel direct en PHP
-     * Usage : <?php NPU_Helpers::network_sites_menu(); ?>
-     */
-    public static function network_sites_menu( $wrapper = 'ul', $class = 'network-sites-menu' ) {
-        return self::render_sites_list( $wrapper, $class, true );
-    }
-
-    /**
-     * Shortcode [network_sites_menu]
-     */
-    public static function shortcode_network_sites_menu( $atts ) {
-        $atts = shortcode_atts([
-            'class'   => 'network-sites-menu',
-            'wrapper' => 'ul'
-        ], $atts );
-
-        return self::render_sites_list( $atts['wrapper'], $atts['class'], false );
     }
 
     /**
@@ -207,7 +133,6 @@ class NPU_Helpers {
      * Page d’options du plugin (admin réseau)
      */
     public static function render_options_page() {
-        // Sauvegarde si POST
         if ( isset($_POST['npu_save']) && check_admin_referer('npu_save_options') ) {
             update_site_option('npu_enable_network_menu', ! empty($_POST['npu_enable_network_menu']));
             echo '<div class="updated"><p>' . __('Options sauvegardées', 'rdc-core-mu-utilities') . '</p></div>';
@@ -264,7 +189,6 @@ class NPU_Helpers {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Vue d’ensemble des sites du réseau', 'rdc-core-mu-utilities') . '</h1>';
 
-        // ⚠️ S’assurer que la classe NPU_List_Table existe
         if ( class_exists('NPU_List_Table') ) {
             $table = new NPU_List_Table();
             $table->prepare_items();
@@ -275,5 +199,4 @@ class NPU_Helpers {
 
         echo '</div>';
     }
-
 }

@@ -13,9 +13,20 @@ class NPU_Network_Sites_Menu {
     }
 
     /**
+     * Vérifie si le menu des sites du réseau est activé
+     */
+    protected static function is_menu_enabled() {
+        return (bool) get_site_option('npu_enable_network_menu', true);
+    }
+
+    /**
      * Récupère les sites du réseau
      */
     protected static function get_sites_list() {
+        if ( ! self::is_menu_enabled() ) {
+            return [];
+        }
+
         $sites = get_sites([
             'public'   => 1,
             'archived' => 0,
@@ -72,7 +83,11 @@ class NPU_Network_Sites_Menu {
             </div>
             <p class="button-controls">
                 <span class="add-to-menu">
-                    <input type="submit"<?php disabled( empty( $sites ) ); ?> class="button-secondary submit-add-to-menu right" value="<?php esc_attr_e( 'Ajouter au menu' ); ?>" name="add-post-type-menu-item" id="submit-network-sites" />
+                    <input type="submit"<?php disabled( empty( $sites ) ); ?>
+                           class="button-secondary submit-add-to-menu right"
+                           value="<?php esc_attr_e( 'Ajouter au menu' ); ?>"
+                           name="add-post-type-menu-item"
+                           id="submit-network-sites" />
                     <span class="spinner"></span>
                 </span>
             </p>
@@ -111,12 +126,12 @@ class NPU_Network_Sites_Menu {
     }
 }
 
-// Boot
+// Initialisation
 NPU_Network_Sites_Menu::init();
 
 /**
  * Fonction helper globale pour l’appel direct en PHP
  */
 function rdc_network_sites_menu( $wrapper = 'ul', $class = 'network-sites-menu' ) {
-    echo RDC_Network_Sites_Menu::render_sites_list( $wrapper, $class );
+    echo NPU_Network_Sites_Menu::render_sites_list( $wrapper, $class );
 }
