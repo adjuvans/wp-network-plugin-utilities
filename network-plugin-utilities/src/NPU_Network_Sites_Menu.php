@@ -64,8 +64,8 @@ class NPU_Network_Sites_Menu {
         $sites = self::get_sites_list();
         ?>
         <div id="posttype-network-sites" class="posttypediv">
-            <div id="tabs-panel-network-sites" class="tabs-panel tabs-panel-active">
-                <ul id="network-sites-checklist" class="categorychecklist form-no-clear">
+            <div id="tabs-panel-posttype-network-sites" class="tabs-panel tabs-panel-active">
+                <ul id="posttype-network-sites-checklist" class="categorychecklist form-no-clear">
                     <?php foreach ( $sites as $i => $site ) : 
                         $item_id = - ( $i + 1 );
                     ?>
@@ -118,7 +118,7 @@ class NPU_Network_Sites_Menu {
                         class="button-secondary submit-add-to-menu right"
                         value="<?php esc_attr_e( 'Ajouter au menu' ); ?>"
                         name="add-custom-menu-item"
-                        id="submit-network-sites" />
+                        id="submit-posttype-network-sites" />
                     <span class="spinner"></span>
                 </span>
             </p>
