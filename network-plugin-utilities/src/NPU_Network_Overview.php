@@ -224,12 +224,22 @@ class NPU_Network_Overview extends WP_List_Table {
         $alerts = NPU_Alerts::get_site_alerts($site_data);
         $alerts_badge = NPU_Alerts::render_alerts_badge($alerts);
 
-        // Nom du site avec badge d'alertes
+        $tech_meta = $site_data['technical_info'];
+        $site_submeta = sprintf(
+            '<div class="npu-site-meta"><small>ID #%d | WP %s | PHP %s | %s</small></div>',
+            intval($site_data['blog_id']),
+            esc_html($tech_meta['wp_version'] ?? ''),
+            esc_html($tech_meta['php_version'] ?? ''),
+            esc_html($tech_meta['locale'] ?? '')
+        );
+
+        // Nom du site avec badge d'alertes + métadonnées
         $site_name = sprintf(
-            '<strong><a href="%s" target="_blank">%s</a>%s</strong><br><a href="%s" target="_blank">%s</a>',
+            '<strong><a href="%s" target="_blank">%s</a>%s</strong>%s<br><a href="%s" target="_blank">%s</a>',
             esc_url($admin_url),
             esc_html($site_data['site_info']['name']),
             $alerts_badge,
+            $site_submeta,
             esc_url($site_data['site_info']['url']),
             esc_html($site_data['site_info']['url'])
         );
@@ -243,10 +253,15 @@ class NPU_Network_Overview extends WP_List_Table {
             esc_html($tech['theme_version'])
         );
 
-        global $wp_version;
         $infos = '<ul>';
         $infos .= '<li>' . __("Thème", 'rdc-core-mu-utilities') . ': ' . $theme_info . '</li>';
-        $infos .= '<li>' . __("Version", 'rdc-core-mu-utilities') . ': WordPress ' . esc_html($wp_version) . '</li>';
+        $infos .= '<li>' . __("Version", 'rdc-core-mu-utilities') . ': WordPress ' . esc_html($tech['wp_version'] ?? '') . '</li>';
+        if (! empty($tech['php_version'])) {
+            $infos .= '<li>PHP: ' . esc_html($tech['php_version']) . '</li>';
+        }
+        if (! empty($tech['mysql_version'])) {
+            $infos .= '<li>MySQL: ' . esc_html($tech['mysql_version']) . '</li>';
+        }
         $infos .= '<li>' . __("Langue", 'rdc-core-mu-utilities') . ': ' . esc_html($tech['locale']) . '</li>';
         $infos .= '<li>' . __("Pièces jointes (total)", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</li>';
         $infos .= '<li><span title="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
@@ -286,7 +301,38 @@ class NPU_Network_Overview extends WP_List_Table {
         if ($local_plugins) {
             $plugins_list = '<ul>';
             foreach ($local_plugins as $plugin) {
-                $plugins_list .= '<li><a href="' . esc_url($admin_url . 'plugins.php') . '" target="_blank">' . esc_html($plugin) . '</a></li>';
+                $plugin_name = is_array($plugin) ? ($plugin['name'] ?? $plugin['file'] ?? '') : $plugin;
+                $search_link = $admin_url . 'plugins.php?s=' . rawurlencode($plugin_name);
+
+                $info_html = '';
+                if (is_array($plugin)) {
+                    $info_parts = [];
+
+                    if (! empty($plugin['version'])) {
+                        $info_parts[] = __('Version', 'rdc-core-mu-utilities') . ': ' . esc_html($plugin['version']);
+                    }
+
+                    if (! empty($plugin['author'])) {
+                        $author = esc_html(wp_strip_all_tags($plugin['author']));
+                        if (! empty($plugin['author_uri'])) {
+                            $info_parts[] = __('Auteur', 'rdc-core-mu-utilities') . ': <a href="' . esc_url($plugin['author_uri']) . '" target="_blank" rel="noreferrer noopener">' . $author . '</a>';
+                        } else {
+                            $info_parts[] = __('Auteur', 'rdc-core-mu-utilities') . ': ' . $author;
+                        }
+                    }
+
+                    if (! empty($plugin['plugin_uri'])) {
+                        $info_parts[] = __('URL', 'rdc-core-mu-utilities') . ': <a href="' . esc_url($plugin['plugin_uri']) . '" target="_blank" rel="noreferrer noopener">' . esc_html($plugin['plugin_uri']) . '</a>';
+                    }
+
+                    if (! empty($info_parts)) {
+                        $info_html = '<details class="npu-plugin-details"><summary>Infos</summary><div class="npu-plugin-meta">'
+                            . implode('<br>', $info_parts)
+                            . '</div></details>';
+                    }
+                }
+
+                $plugins_list .= '<li><a href="' . esc_url($search_link) . '" target="_blank">' . esc_html($plugin_name) . '</a>' . $info_html . '</li>';
             }
             $plugins_list .= '</ul>';
         } else {

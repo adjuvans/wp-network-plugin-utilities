@@ -126,6 +126,7 @@ class NPU_Cache {
      */
     private static function get_technical_info() {
         global $wp_version;
+        global $wpdb;
 
         $theme = wp_get_theme();
         $total_attachments = wp_count_posts('attachment');
@@ -147,6 +148,8 @@ class NPU_Cache {
             'theme_name' => $theme->get('Name'),
             'theme_version' => $theme->get('Version'),
             'wp_version' => $wp_version,
+            'php_version' => PHP_VERSION,
+            'mysql_version' => method_exists($wpdb, 'db_version') ? $wpdb->db_version() : '',
             'locale' => get_locale(),
             'attachments_total' => $attachments_total,
             'valid_media_count' => $valid_media_count,
@@ -320,10 +323,30 @@ class NPU_Cache {
      * @return array
      */
     private static function get_local_plugins($network_plugins = []) {
+        if (! function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         $active_plugins = get_option('active_plugins', []);
         $local_plugins = array_diff($active_plugins, $network_plugins);
 
-        return array_values($local_plugins);
+        $all_plugins_data = get_plugins();
+        $plugins = [];
+
+        foreach ($local_plugins as $plugin_file) {
+            $plugin_data = $all_plugins_data[$plugin_file] ?? null;
+            $plugins[] = [
+                'file' => $plugin_file,
+                'name' => $plugin_data['Name'] ?? $plugin_file,
+                'slug' => dirname($plugin_file),
+                'version' => $plugin_data['Version'] ?? '',
+                'author' => $plugin_data['Author'] ?? '',
+                'author_uri' => $plugin_data['AuthorURI'] ?? '',
+                'plugin_uri' => $plugin_data['PluginURI'] ?? '',
+            ];
+        }
+
+        return array_values($plugins);
     }
 
     /**

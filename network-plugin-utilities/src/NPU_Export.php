@@ -171,7 +171,16 @@ class NPU_Export {
         if (empty($items)) {
             return '';
         }
-        return implode(', ', $items);
+        $labels = [];
+        foreach ($items as $item) {
+            if (is_array($item)) {
+                $labels[] = $item['name'] ?? $item['file'] ?? '';
+            } else {
+                $labels[] = $item;
+            }
+        }
+
+        return implode(', ', array_filter($labels));
     }
 
     /**
