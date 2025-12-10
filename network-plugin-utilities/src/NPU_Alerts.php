@@ -162,18 +162,11 @@ class NPU_Alerts {
         $count = count($alerts);
         $severity = self::get_highest_severity($alerts);
 
-        $colors = [
-            'error' => '#d63638',
-            'warning' => '#dba617',
-            'info' => '#2271b1',
-        ];
-
-        $color = $colors[$severity] ?? $colors['info'];
         $title = self::build_alerts_tooltip($alerts);
 
         return sprintf(
-            '<span class="npu-alert-badge" style="background:%s;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;margin-left:5px;cursor:help;" title="%s">%d</span>',
-            esc_attr($color),
+            '<span class="npu-alert-badge npu-alert-%s" data-tooltip="%s">%d</span>',
+            esc_attr($severity),
             esc_attr($title),
             $count
         );
@@ -270,7 +263,7 @@ class NPU_Alerts {
                 . '</p></div>';
         }
 
-        $html = '<div class="notice notice-warning inline" style="padding:10px;">';
+        $html = '<div class="notice notice-warning inline npu-alert-box">';
         $html .= '<p><strong>'
             . sprintf(
                 __("⚠️ %d site(s) nécessite(nt) de l'attention", 'rdc-core-mu-utilities'),
@@ -278,7 +271,7 @@ class NPU_Alerts {
             )
             . '</strong></p>';
 
-        $html .= '<ul style="margin:5px 0 0 20px;">';
+        $html .= '<ul class="npu-alert-list">';
 
         if ($summary['by_type'][self::ALERT_NO_USERS] > 0) {
             $html .= '<li>'

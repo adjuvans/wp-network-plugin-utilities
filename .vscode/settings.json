@@ -1,0 +1,34 @@
+{
+	"intelephense.environment.includePaths": [
+		"./",
+		"../wordpress-env"
+	],
+	"intelephense.stubs": [
+		"core",
+		"standard",
+		"pcre",
+		"date",
+		"json",
+		"mbstring",
+		"ctype",
+		"spl",
+		"wordpress",
+		"woocommerce"
+	],
+	"liveSassCompile.settings.includeItems": [
+		"network-plugin-utilities/assets/scss/**/*.scss"
+	],
+	"liveSassCompile.settings.formats": [
+		{
+			"format": "expanded",
+			"extensionName": ".css",
+			"savePath": "network-plugin-utilities/assets/css"
+		},
+		{
+			"format": "compressed",
+			"extensionName": ".min.css",
+			"savePath": "network-plugin-utilities/assets/css"
+		}
+	],
+	"liveSassCompile.settings.generateMap": false
+}

@@ -30,15 +30,12 @@ Thumbs.db
 
 # PHPStorm / VSCode / JetBrains
 .idea/
-.vscode/
 *.code-workspace
 
 # Build / Cache
 cache/
 dist/
 build/
-*.min.css
-*.min.js
 
 # Uploads or temporary plugin export artifacts
 *.tmp

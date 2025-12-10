@@ -182,7 +182,7 @@ class NPU_Network_Overview extends WP_List_Table {
                 // En cas d'erreur, afficher un message minimal
                 $data[] = [
                     'site' => sprintf(
-                        '<strong>%s</strong><br><span style="color:#d63638;">%s</span>',
+                        '<strong>%s</strong><br><span class="npu-error">%s</span>',
                         esc_html($site->domain . $site->path),
                         __("Erreur de chargement", 'rdc-core-mu-utilities')
                     ),
@@ -221,14 +221,18 @@ class NPU_Network_Overview extends WP_List_Table {
         $alerts_badge = NPU_Alerts::render_alerts_badge($alerts);
 
         $tech_meta = $site_data['technical_info'];
-        $site_submeta = sprintf(
-            '<div class="npu-site-meta"><small>ID #%d — WP %s — PHP %s — MySQL %s — Langue %s</small></div>',
-            intval($site_data['blog_id']),
-            esc_html($tech_meta['wp_version'] ?? ''),
-            esc_html($tech_meta['php_version'] ?? ''),
-            esc_html($tech_meta['mysql_version'] ?? ''),
-            esc_html($tech_meta['locale'] ?? '')
-        );
+        $meta_parts = [
+            sprintf(__('ID #%d', 'rdc-core-mu-utilities'), intval($site_data['blog_id'])),
+            'WP ' . ($tech_meta['wp_version'] ?? ''),
+            'PHP ' . ($tech_meta['php_version'] ?? ''),
+            'MySQL ' . ($tech_meta['mysql_version'] ?? ''),
+            ($tech_meta['locale'] ?? ''),
+        ];
+        $site_submeta = '<div class="npu-site-meta">';
+        foreach ($meta_parts as $part) {
+            $site_submeta .= '<span class="npu-meta-badge">' . esc_html($part) . '</span>';
+        }
+        $site_submeta .= '</div>';
 
         // Nom du site avec badge d'alertes + métadonnées
         $site_name = sprintf(
@@ -252,11 +256,12 @@ class NPU_Network_Overview extends WP_List_Table {
 
         $infos = '<ul>';
         $infos .= '<li>' . __("Thème", 'rdc-core-mu-utilities') . ': ' . $theme_info . '</li>';
-        $infos .= '<li>' . __("Pièces jointes (total)", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</li>';
-        $infos .= '<li><span title="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
-                . __("Médias valides", 'rdc-core-mu-utilities') . '</span>: ' . intval($tech['valid_media_count']) . '</li>';
-        $infos .= '<li><span title="' . esc_attr__("Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
-                . __("Fichiers média", 'rdc-core-mu-utilities') . '</span>: ' . intval($tech['media_files']) . '</li>';
+        $infos .= '<li>' . __("Médias", 'rdc-core-mu-utilities') . ': '
+            . '<span class="npu-pill npu-tooltip" data-tooltip="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '">'
+            . __("Valides", 'rdc-core-mu-utilities') . ': ' . intval($tech['valid_media_count']) . '</span> '
+            . '<span class="npu-pill npu-tooltip" data-tooltip="' . esc_attr__("Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement", 'rdc-core-mu-utilities') . '">'
+            . __("Fichiers", 'rdc-core-mu-utilities') . ': ' . intval($tech['media_files']) . '</span> '
+            . '<span class="npu-pill">' . __("Total", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</span></li>';
         $last_content = $tech['last_content'] ?? null;
         if ($last_content && ! empty($last_content['date'])) {
             $type_label = $this->get_post_type_label($last_content['type'] ?? '');
@@ -264,16 +269,16 @@ class NPU_Network_Overview extends WP_List_Table {
             $relative = $this->format_relative_datetime($last_content['date']);
             $exact = $this->format_exact_datetime($last_content['date']);
             $tooltip = sprintf(
-                /* translators: 1: exact datetime, 2: title, 3: type */
-                __('Dernière activité détectée le %1$s sur le contenu "%2$s" (post_type : %3$s)', 'rdc-core-mu-utilities'),
-                esc_html($exact),
-                esc_html($title_label),
-                esc_html($type_label)
+                /* translators: 1: exact datetime, 2: title, 3: type label */
+                __('Dernière activité détectée le %1$s sur le contenu "%2$s" (type : %3$s)', 'rdc-core-mu-utilities'),
+                $exact,
+                $title_label,
+                $type_label
             );
 
-            $infos .= '<li><span class="npu-last-activity" title="' . esc_attr($tooltip) . '">'
-                . __('Dernière activité', 'rdc-core-mu-utilities') . '</span>: ' . esc_html($relative)
-                . '</li>';
+            $infos .= '<li><span class="npu-last-activity npu-tooltip" data-tooltip="' . esc_attr($tooltip) . '">'
+                . __('Dernière activité', 'rdc-core-mu-utilities') . ': ' . esc_html($relative)
+                . '</span></li>';
         } else {
             $infos .= '<li>' . __("Dernière activité", 'rdc-core-mu-utilities') . ': ' . __("N/A", 'rdc-core-mu-utilities') . '</li>';
         }
@@ -285,7 +290,7 @@ class NPU_Network_Overview extends WP_List_Table {
             $user_list = '<ul>';
             foreach ($users as $user) {
                 $user_list .= '<li><a href="' . esc_url($admin_url . 'user-edit.php?user_id=' . $user['ID']) . '" target="_blank">'
-                    . esc_html($user['login']) . '</a> <small style="color:#666;">(' . esc_html($user['roles']) . ')</small></li>';
+                    . esc_html($user['login']) . '</a> <span class="npu-muted">(' . esc_html($user['roles']) . ')</span></li>';
             }
             $user_list .= '</ul>';
         } else {
@@ -373,7 +378,7 @@ class NPU_Network_Overview extends WP_List_Table {
         foreach ($post_types as $pt) {
             $items[] = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt['name']) . '" target="_blank">'
                 . esc_html($pt['label']) . '</a>: ' . intval($pt['count'])
-                . ' <small style="color:#666;">(' . esc_html($pt['origin']) . ')</small></li>';
+                . ' <span class="npu-muted">(' . esc_html($pt['origin']) . ')</span></li>';
         }
 
         return '<ul>' . implode('', $items) . '</ul>';
@@ -395,7 +400,7 @@ class NPU_Network_Overview extends WP_List_Table {
         foreach ($taxonomies as $tax) {
             $items[] = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax['name']) . '" target="_blank">'
                 . esc_html($tax['label']) . '</a>: ' . intval($tax['count'])
-                . ' <small style="color:#666;">(' . esc_html($tax['origin']) . ')</small></li>';
+                . ' <span class="npu-muted">(' . esc_html($tax['origin']) . ')</span></li>';
         }
 
         return '<ul>' . implode('', $items) . '</ul>';
@@ -405,8 +410,8 @@ class NPU_Network_Overview extends WP_List_Table {
      * Formate l'affichage combiné des CPT et taxonomies.
      */
     private function format_contents_column($post_types_html, $taxonomies_html) {
-        $post_types_section = '<div><strong>' . __("Post types", 'rdc-core-mu-utilities') . '</strong><br>' . $post_types_html . '</div>';
-        $taxonomies_section = '<div style="margin-top:8px;"><strong>' . __("Taxonomies", 'rdc-core-mu-utilities') . '</strong><br>' . $taxonomies_html . '</div>';
+        $post_types_section = '<div class="npu-contents-section"><strong>' . __("Post types", 'rdc-core-mu-utilities') . '</strong><br>' . $post_types_html . '</div>';
+        $taxonomies_section = '<div class="npu-contents-section"><strong>' . __("Taxonomies", 'rdc-core-mu-utilities') . '</strong><br>' . $taxonomies_html . '</div>';
         return $post_types_section . $taxonomies_section;
     }
 

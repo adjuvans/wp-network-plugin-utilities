@@ -14,6 +14,7 @@ class NPU_Network_Sites_Menu
         add_action('load-nav-menus.php', [__CLASS__, 'addNavMenuMetabox']);
         add_shortcode('network_sites_menu', [__CLASS__, 'shortcodeNetworkSitesMenu']);
 
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueueAssets']);
         add_filter('wp_setup_nav_menu_item', [__CLASS__, 'hydrateMenuItem']);
         add_action('wp_update_nav_menu_item', [__CLASS__, 'persistMenuItem'], 10, 3);
         add_action('admin_head-nav-menus.php', [__CLASS__, 'renderLockingAssets']);
@@ -26,6 +27,20 @@ class NPU_Network_Sites_Menu
     protected static function isMenuEnabled(): bool
     {
         return (bool) get_site_option('npu_enable_network_menu', true);
+    }
+
+    public static function enqueueAssets($hook): void
+    {
+        if ($hook !== 'nav-menus.php') {
+            return;
+        }
+
+        wp_enqueue_style(
+            'npu-admin',
+            NPU_URL . 'assets/css/npu-admin.css',
+            [],
+            '1.7'
+        );
     }
 
     /**
@@ -161,18 +176,6 @@ class NPU_Network_Sites_Menu
     public static function renderLockingAssets(): void
     {
         ?>
-        <style>
-            .menu-item-type-<?php echo esc_attr(self::ITEM_TYPE); ?> .field-url {
-                display: none;
-            }
-            .menu-item-type-<?php echo esc_attr(self::ITEM_TYPE); ?> .npu-network-site-lock {
-                margin: 10px 0;
-                padding: 8px 10px;
-                background: #f6f7f7;
-                border: 1px solid #dcdcde;
-                border-radius: 4px;
-            }
-        </style>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('.menu-item-type-<?php echo esc_attr(self::ITEM_TYPE); ?> .edit-menu-item-url').forEach(function (input) {

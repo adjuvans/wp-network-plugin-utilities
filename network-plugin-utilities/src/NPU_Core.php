@@ -266,13 +266,13 @@ class NPU_Core {
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><span><?php _e('Post types à analyser', 'rdc-core-mu-utilities'); ?></span></legend>
-                                <p class="description" style="margin-bottom:10px;">
+                                <p class="description npu-option-description">
                                     <?php _e('Sélectionnez les types de contenu à prendre en compte pour déterminer si un site est actif ou inactif.', 'rdc-core-mu-utilities'); ?><br>
                                     <?php _e('Par défaut, WordPress analyse uniquement les articles ("Posts") et les pages, mais vous pouvez inclure d\'autres contenus comme les événements, les projets, etc.', 'rdc-core-mu-utilities'); ?><br>
                                     <strong><?php _e('Le plugin utilisera la date de publication du dernier contenu parmi les types sélectionnés.', 'rdc-core-mu-utilities'); ?></strong>
                                 </p>
                                 <?php foreach ($all_post_types as $post_type_obj): ?>
-                                    <label style="display:block;margin-bottom:5px;">
+                                    <label class="npu-option-checkbox">
                                         <input
                                             type="checkbox"
                                             name="npu_activity_post_types[]"
@@ -280,7 +280,7 @@ class NPU_Core {
                                             <?php checked(in_array($post_type_obj->name, $activity_post_types)); ?>
                                         >
                                         <?php echo esc_html($post_type_obj->labels->name); ?>
-                                        <code style="color:#666;font-size:11px;">(<?php echo esc_html($post_type_obj->name); ?>)</code>
+                                        <code class="npu-code">(<?php echo esc_html($post_type_obj->name); ?>)</code>
                                     </label>
                                 <?php endforeach; ?>
                             </fieldset>
@@ -291,14 +291,14 @@ class NPU_Core {
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><span><?php _e('Plugins à analyser', 'rdc-core-mu-utilities'); ?></span></legend>
-                                <p class="description" style="margin-bottom:10px;">
+                                <p class="description npu-option-description">
                                     <?php _e('Sélectionnez les plugins actifs (réseau ou site principal) dont les CPT et taxonomies doivent être analysés. Laisser vide pour analyser tous les plugins.', 'rdc-core-mu-utilities'); ?>
                                 </p>
                                 <?php if (empty($active_plugins)) : ?>
                                     <em><?php _e('Aucun plugin actif détecté.', 'rdc-core-mu-utilities'); ?></em>
                                 <?php else : ?>
                                     <?php foreach ($active_plugins as $plugin) : ?>
-                                        <label style="display:block;margin-bottom:6px;">
+                                        <label class="npu-option-checkbox">
                                             <input
                                                 type="checkbox"
                                                 name="npu_analysis_plugins[]"
@@ -306,11 +306,11 @@ class NPU_Core {
                                                 <?php checked(in_array($plugin['slug'], $analysis_plugins, true)); ?>
                                             >
                                             <?php echo esc_html($plugin['name']); ?>
-                                            <code style="color:#666;font-size:11px;">(<?php echo esc_html($plugin['slug']); ?>)</code>
+                                            <code class="npu-code">(<?php echo esc_html($plugin['slug']); ?>)</code>
                                             <?php if ($plugin['is_network']) : ?>
-                                                <span style="color:#2271b1;font-size:11px;"><?php _e('Réseau', 'rdc-core-mu-utilities'); ?></span>
+                                                <span class="npu-badge npu-badge-network"><?php _e('Réseau', 'rdc-core-mu-utilities'); ?></span>
                                             <?php else : ?>
-                                                <span style="color:#757575;font-size:11px;"><?php _e('Site principal', 'rdc-core-mu-utilities'); ?></span>
+                                                <span class="npu-badge npu-badge-main"><?php _e('Site principal', 'rdc-core-mu-utilities'); ?></span>
                                             <?php endif; ?>
                                         </label>
                                     <?php endforeach; ?>
@@ -336,13 +336,17 @@ class NPU_Core {
      * Charger CSS admin
      */
     public static function enqueue_assets($hook) {
-        // Le hook correct pour la page "Analyse du réseau" (sous-menu de NPU core)
-        if ($hook === 'npu-core_page_npu-network-overview') {
+        $hooks = [
+            'npu-core_page_npu-network-overview',
+            'npu-core_page_npu-settings',
+        ];
+
+        if (in_array($hook, $hooks, true)) {
             wp_enqueue_style(
                 'npu-admin',
-                NPU_URL . 'assets/css/npu-admin.min.css',
+                NPU_URL . 'assets/css/npu-admin.css',
                 [],
-                '1.5'
+                '1.7'
             );
         }
     }
