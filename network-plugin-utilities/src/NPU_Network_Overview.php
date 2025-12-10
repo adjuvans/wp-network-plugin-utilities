@@ -61,6 +61,9 @@ class NPU_Network_Overview extends WP_List_Table {
 
         echo '</h1>';
 
+        // Afficher le résumé des alertes
+        echo self::render_alerts_panel();
+
         $table = new self();
         $table->prepare_items();
         $table->display();
@@ -97,6 +100,27 @@ class NPU_Network_Overview extends WP_List_Table {
 
     public function get_hidden_columns() {
         return [ 'cpt_custom', 'taxo_custom' ];
+    }
+
+    /**
+     * Affiche le panneau de résumé des alertes
+     *
+     * @return string HTML
+     */
+    private static function render_alerts_panel() {
+        $sites = get_sites(['number' => 0]);
+        $network_plugins = array_keys(get_site_option('active_sitewide_plugins', []));
+        $all_sites_data = [];
+
+        foreach ($sites as $site) {
+            $site_data = NPU_Cache::get_site_data($site, $network_plugins);
+            if ($site_data !== false) {
+                $all_sites_data[] = $site_data;
+            }
+        }
+
+        $summary = NPU_Alerts::get_network_alerts_summary($all_sites_data);
+        return NPU_Alerts::render_alerts_summary($summary);
     }
 
     /**
@@ -169,11 +193,16 @@ class NPU_Network_Overview extends WP_List_Table {
     private function format_site_data($site_data) {
         $admin_url = $site_data['site_info']['admin_url'];
 
-        // Nom du site
+        // Détecter les alertes
+        $alerts = NPU_Alerts::get_site_alerts($site_data);
+        $alerts_badge = NPU_Alerts::render_alerts_badge($alerts);
+
+        // Nom du site avec badge d'alertes
         $site_name = sprintf(
-            '<strong><a href="%s" target="_blank">%s</a></strong><br><a href="%s" target="_blank">%s</a>',
+            '<strong><a href="%s" target="_blank">%s</a>%s</strong><br><a href="%s" target="_blank">%s</a>',
             esc_url($admin_url),
             esc_html($site_data['site_info']['name']),
+            $alerts_badge,
             esc_url($site_data['site_info']['url']),
             esc_html($site_data['site_info']['url'])
         );

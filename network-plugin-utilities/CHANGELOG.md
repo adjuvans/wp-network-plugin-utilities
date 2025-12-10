@@ -14,6 +14,14 @@
   - Export CSV : Toutes les données des sites dans un format Excel/Google Sheets
   - Export JSON : Format structuré pour intégration avec d'autres outils
   - Boutons directement dans l'interface d'administration
+- **Système d'alertes intelligent** :
+  - Détection automatique des sites nécessitant de l'attention
+  - Sites sans utilisateurs (orphelins)
+  - Sites inactifs depuis X mois (configurable)
+  - Sites avec quota de médias élevé (configurable)
+  - Panneau de résumé en haut de page
+  - Badges colorés sur chaque site avec détails au survol
+  - 3 niveaux de sévérité : erreur (rouge), avertissement (orange), info (bleu)
 - **Configuration centralisée** : Nouveau fichier `config.php` pour gérer tous les paramètres
 - **Gestion d'erreurs améliorée** : Try/catch autour des opérations critiques avec logging
 
@@ -40,7 +48,8 @@
 ### 📦 Nouveaux fichiers
 - `network-plugin-utilities/config.php` - Configuration centralisée
 - `network-plugin-utilities/src/NPU_Cache.php` - Classe de gestion du cache
-- `network-plugin-utilities/src/NPU_Export.php` - Classe de gestion des exports
+- `network-plugin-utilities/src/NPU_Export.php` - Classe de gestion des exports (CSV/JSON)
+- `network-plugin-utilities/src/NPU_Alerts.php` - Système de détection d'alertes
 - `network-plugin-utilities/CHANGELOG.md` - Historique des modifications
 
 ### 🔄 Hooks automatiques ajoutés
