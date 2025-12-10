@@ -190,12 +190,40 @@ class NPU_Core {
      */
     public static function render_options_page() {
         if ( isset($_POST['npu_save']) && check_admin_referer('npu_save_options') ) {
+            // Sauvegarder l'option du menu réseau
             update_site_option('npu_enable_network_menu', isset($_POST['npu_enable_network_menu']) ? 1 : 0);
 
-            echo '<div class="updated"><p>' . __("Options sauvegardées", 'rdc-core-mu-utilities') . '</p></div>';
+            // Sauvegarder les post types sélectionnés pour l'analyse d'activité
+            $selected_post_types = [];
+            if (isset($_POST['npu_activity_post_types']) && is_array($_POST['npu_activity_post_types'])) {
+                // Valider et nettoyer les post types
+                foreach ($_POST['npu_activity_post_types'] as $post_type) {
+                    $post_type = sanitize_key($post_type);
+                    if (post_type_exists($post_type)) {
+                        $selected_post_types[] = $post_type;
+                    }
+                }
+            }
+
+            // Si aucun post type sélectionné, utiliser les valeurs par défaut
+            if (empty($selected_post_types)) {
+                $selected_post_types = ['post', 'page'];
+            }
+
+            update_site_option('npu_activity_post_types', $selected_post_types);
+
+            // Invalider le cache pour forcer la mise à jour
+            NPU_Cache::clear_cache();
+
+            echo '<div class="updated"><p>' . __("Options sauvegardées. Le cache a été rafraîchi.", 'rdc-core-mu-utilities') . '</p></div>';
         }
 
         $enabled = self::is_menu_enabled();
+        $activity_post_types = get_site_option('npu_activity_post_types', ['post', 'page']);
+
+        // Récupérer tous les post types publics
+        $all_post_types = get_post_types(['public' => true, 'show_ui' => true], 'objects');
+
         ?>
         <div class="wrap">
             <h1><?php _e('Options NPU', 'rdc-core-mu-utilities'); ?></h1>
@@ -209,6 +237,31 @@ class NPU_Core {
                                 <input type="checkbox" name="npu_enable_network_menu" value="1" <?php checked($enabled, 1); ?>>
                                 <?php _e('Oui, afficher la liste des sites du réseau', 'rdc-core-mu-utilities'); ?>
                             </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Post types inclus dans l\'analyse d\'activité', 'rdc-core-mu-utilities'); ?></th>
+                        <td>
+                            <fieldset>
+                                <legend class="screen-reader-text"><span><?php _e('Post types à analyser', 'rdc-core-mu-utilities'); ?></span></legend>
+                                <p class="description" style="margin-bottom:10px;">
+                                    <?php _e('Sélectionnez les types de contenu à prendre en compte pour déterminer si un site est actif ou inactif.', 'rdc-core-mu-utilities'); ?><br>
+                                    <?php _e('Par défaut, WordPress analyse uniquement les articles ("Posts") et les pages, mais vous pouvez inclure d\'autres contenus comme les événements, les projets, etc.', 'rdc-core-mu-utilities'); ?><br>
+                                    <strong><?php _e('Le plugin utilisera la date de publication du dernier contenu parmi les types sélectionnés.', 'rdc-core-mu-utilities'); ?></strong>
+                                </p>
+                                <?php foreach ($all_post_types as $post_type_obj): ?>
+                                    <label style="display:block;margin-bottom:5px;">
+                                        <input
+                                            type="checkbox"
+                                            name="npu_activity_post_types[]"
+                                            value="<?php echo esc_attr($post_type_obj->name); ?>"
+                                            <?php checked(in_array($post_type_obj->name, $activity_post_types)); ?>
+                                        >
+                                        <?php echo esc_html($post_type_obj->labels->name); ?>
+                                        <code style="color:#666;font-size:11px;">(<?php echo esc_html($post_type_obj->name); ?>)</code>
+                                    </label>
+                                <?php endforeach; ?>
+                            </fieldset>
                         </td>
                     </tr>
                 </table>
