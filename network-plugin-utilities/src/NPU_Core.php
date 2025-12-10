@@ -11,6 +11,7 @@ class NPU_Core {
 
         // Menu réseau (admin network)
         add_action('network_admin_menu', [__CLASS__, 'register_menu']);
+        add_action('network_admin_menu', [__CLASS__, 'remove_duplicate_submenu'], 999);
 
         // Screen options (colonnes, pagination)
         add_filter('set-screen-option', [__CLASS__, 'set_screen_option'], 10, 3);
@@ -142,6 +143,13 @@ class NPU_Core {
     }
 
     /**
+     * Supprime le sous-menu auto-généré portant le même slug que le parent.
+     */
+    public static function remove_duplicate_submenu() {
+        remove_submenu_page('npu-core', 'npu-core');
+    }
+
+    /**
      * Ajoute les Screen Options pour la page d'analyse du réseau
      */
     public static function add_screen_options() {
@@ -212,6 +220,18 @@ class NPU_Core {
 
             update_site_option('npu_activity_post_types', $selected_post_types);
 
+            // Sauvegarder la sélection des plugins à analyser
+            $selected_plugins = [];
+            if (isset($_POST['npu_analysis_plugins']) && is_array($_POST['npu_analysis_plugins'])) {
+                foreach ($_POST['npu_analysis_plugins'] as $plugin_slug) {
+                    $plugin_slug = sanitize_text_field($plugin_slug);
+                    if (! empty($plugin_slug)) {
+                        $selected_plugins[] = $plugin_slug;
+                    }
+                }
+            }
+            update_site_option('npu_analysis_plugins', array_unique($selected_plugins));
+
             // Invalider le cache pour forcer la mise à jour
             NPU_Cache::clear_cache();
 
@@ -220,9 +240,11 @@ class NPU_Core {
 
         $enabled = self::is_menu_enabled();
         $activity_post_types = get_site_option('npu_activity_post_types', ['post', 'page']);
+        $analysis_plugins = get_site_option('npu_analysis_plugins', []);
 
         // Récupérer tous les post types publics
         $all_post_types = get_post_types(['public' => true, 'show_ui' => true], 'objects');
+        $active_plugins = self::get_active_plugins_for_settings();
 
         ?>
         <div class="wrap">
@@ -264,6 +286,38 @@ class NPU_Core {
                             </fieldset>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Limiter l\'analyse aux plugins', 'rdc-core-mu-utilities'); ?></th>
+                        <td>
+                            <fieldset>
+                                <legend class="screen-reader-text"><span><?php _e('Plugins à analyser', 'rdc-core-mu-utilities'); ?></span></legend>
+                                <p class="description" style="margin-bottom:10px;">
+                                    <?php _e('Sélectionnez les plugins actifs (réseau ou site principal) dont les CPT et taxonomies doivent être analysés. Laisser vide pour analyser tous les plugins.', 'rdc-core-mu-utilities'); ?>
+                                </p>
+                                <?php if (empty($active_plugins)) : ?>
+                                    <em><?php _e('Aucun plugin actif détecté.', 'rdc-core-mu-utilities'); ?></em>
+                                <?php else : ?>
+                                    <?php foreach ($active_plugins as $plugin) : ?>
+                                        <label style="display:block;margin-bottom:6px;">
+                                            <input
+                                                type="checkbox"
+                                                name="npu_analysis_plugins[]"
+                                                value="<?php echo esc_attr($plugin['slug']); ?>"
+                                                <?php checked(in_array($plugin['slug'], $analysis_plugins, true)); ?>
+                                            >
+                                            <?php echo esc_html($plugin['name']); ?>
+                                            <code style="color:#666;font-size:11px;">(<?php echo esc_html($plugin['slug']); ?>)</code>
+                                            <?php if ($plugin['is_network']) : ?>
+                                                <span style="color:#2271b1;font-size:11px;"><?php _e('Réseau', 'rdc-core-mu-utilities'); ?></span>
+                                            <?php else : ?>
+                                                <span style="color:#757575;font-size:11px;"><?php _e('Site principal', 'rdc-core-mu-utilities'); ?></span>
+                                            <?php endif; ?>
+                                        </label>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </fieldset>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button(__('Enregistrer', 'rdc-core-mu-utilities'), 'primary', 'npu_save'); ?>
             </form>
@@ -291,5 +345,42 @@ class NPU_Core {
                 '1.5'
             );
         }
+    }
+
+    /**
+     * Récupère les plugins actifs (réseau + site principal) pour l'affichage des options.
+     */
+    private static function get_active_plugins_for_settings() {
+        if (! function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $network_plugins = array_keys(get_site_option('active_sitewide_plugins', []));
+
+        $main_site_id = function_exists('get_main_site_id') ? get_main_site_id() : 1;
+        switch_to_blog($main_site_id);
+        $main_active = get_option('active_plugins', []);
+        restore_current_blog();
+
+        $all = array_unique(array_merge($network_plugins, $main_active));
+        $plugins_data = get_plugins();
+
+        $out = [];
+        foreach ($all as $plugin_file) {
+            $data = $plugins_data[$plugin_file] ?? [];
+            $slug = dirname($plugin_file);
+            $out[] = [
+                'slug'       => $slug,
+                'file'       => $plugin_file,
+                'name'       => $data['Name'] ?? $plugin_file,
+                'is_network' => in_array($plugin_file, $network_plugins, true),
+            ];
+        }
+
+        usort($out, function ($a, $b) {
+            return strcmp(strtolower($a['name']), strtolower($b['name']));
+        });
+
+        return $out;
     }
 }

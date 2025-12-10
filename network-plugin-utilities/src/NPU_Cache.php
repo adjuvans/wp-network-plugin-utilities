@@ -248,6 +248,7 @@ class NPU_Cache {
 
         $post_types = get_post_types([], 'objects');
         $excluded = self::$config['excluded_post_types'] ?? [];
+        $allowed_plugins = self::get_allowed_plugins_filter();
         $builtin = [];
         $custom = [];
 
@@ -270,6 +271,9 @@ class NPU_Cache {
             if ($pt->_builtin) {
                 $builtin[] = $item;
             } else {
+                if (! self::is_allowed_plugin_origin($origin, $allowed_plugins)) {
+                    continue;
+                }
                 $custom[] = $item;
             }
         }
@@ -287,6 +291,7 @@ class NPU_Cache {
 
         $taxonomies = get_taxonomies([], 'objects');
         $excluded = self::$config['excluded_taxonomies'] ?? [];
+        $allowed_plugins = self::get_allowed_plugins_filter();
         $builtin = [];
         $custom = [];
 
@@ -309,6 +314,9 @@ class NPU_Cache {
             if ($tax->_builtin) {
                 $builtin[] = $item;
             } else {
+                if (! self::is_allowed_plugin_origin($origin, $allowed_plugins)) {
+                    continue;
+                }
                 $custom[] = $item;
             }
         }
@@ -347,6 +355,36 @@ class NPU_Cache {
         }
 
         return array_values($plugins);
+    }
+
+    /**
+     * Plugins autorisés pour l'analyse (filtre optionnel).
+     */
+    private static function get_allowed_plugins_filter() {
+        $selected = get_site_option('npu_analysis_plugins', []);
+
+        if (! is_array($selected) || empty($selected)) {
+            return [];
+        }
+
+        $selected = array_map('sanitize_text_field', $selected);
+        return array_filter($selected);
+    }
+
+    /**
+     * Vérifie si l'origine d'un objet correspond au filtre de plugins autorisés.
+     */
+    private static function is_allowed_plugin_origin($origin, $allowed_plugins) {
+        if (empty($allowed_plugins)) {
+            return true;
+        }
+
+        if (strpos($origin, 'plugin: ') === 0) {
+            $slug = trim(substr($origin, strlen('plugin: ')));
+            return in_array($slug, $allowed_plugins, true);
+        }
+
+        return false;
     }
 
     /**
