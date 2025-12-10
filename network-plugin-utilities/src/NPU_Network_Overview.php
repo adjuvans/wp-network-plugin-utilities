@@ -1,4 +1,10 @@
 <?php
+/**
+ * Vue d'ensemble des sites du réseau
+ *
+ * @package NPU
+ * @since 1.0.0
+ */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -8,8 +14,34 @@ class NPU_Network_Overview extends WP_List_Table {
      * Rendu de la page (appelée depuis NPU_Core::register_menu)
      */
     public static function render_page() {
+        // Gérer le rafraîchissement du cache
+        if (isset($_GET['refresh_cache']) && check_admin_referer('npu_refresh_cache', 'npu_nonce')) {
+            if (NPU_Cache::can_refresh_cache()) {
+                NPU_Cache::clear_cache();
+                echo '<div class="notice notice-success is-dismissible"><p>'
+                    . __("Le cache a été rafraîchi avec succès.", 'rdc-core-mu-utilities')
+                    . '</p></div>';
+            } else {
+                echo '<div class="notice notice-warning is-dismissible"><p>'
+                    . __("Veuillez patienter avant de rafraîchir à nouveau le cache.", 'rdc-core-mu-utilities')
+                    . '</p></div>';
+            }
+        }
+
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__('Vue d’ensemble des sites du réseau', 'rdc-core-mu-utilities') . '</h1>';
+        echo '<h1>' . esc_html__("Vue d'ensemble des sites du réseau", 'rdc-core-mu-utilities');
+
+        // Bouton de rafraîchissement
+        $refresh_url = wp_nonce_url(
+            add_query_arg('refresh_cache', '1'),
+            'npu_refresh_cache',
+            'npu_nonce'
+        );
+        echo ' <a href="' . esc_url($refresh_url) . '" class="page-title-action">'
+            . __("Rafraîchir le cache", 'rdc-core-mu-utilities')
+            . '</a>';
+
+        echo '</h1>';
 
         $table = new self();
         $table->prepare_items();
@@ -49,6 +81,9 @@ class NPU_Network_Overview extends WP_List_Table {
         return [ 'cpt_custom', 'taxo_custom' ];
     }
 
+    /**
+     * Prépare les éléments à afficher
+     */
     public function prepare_items() {
         $columns  = $this->get_columns();
         $hidden   = get_hidden_columns($this->screen);
@@ -56,160 +91,188 @@ class NPU_Network_Overview extends WP_List_Table {
         $this->_column_headers = [ $columns, $hidden, $sortable ];
 
         $network_plugins = array_keys( get_site_option( 'active_sitewide_plugins', [] ) );
-        $sites = get_sites([ 'number' => 0 ]);
+
+        // Pagination avant de récupérer les données
+        $config = NPU_Cache::get_config();
+        $per_page = $this->get_items_per_page('sites_per_page', $config['default_per_page']);
+        $current_page = $this->get_pagenum();
+
+        // Récupérer tous les sites pour la pagination
+        $all_sites = get_sites(['number' => 0]);
+        $total_items = count($all_sites);
+
+        // Ne traiter que les sites de la page courante
+        $offset = ($current_page - 1) * $per_page;
+        $sites_for_page = array_slice($all_sites, $offset, $per_page);
 
         $data = [];
 
-        foreach ( $sites as $site ) {
-            switch_to_blog( $site->blog_id );
+        foreach ($sites_for_page as $site) {
+            // Utiliser le cache
+            $site_data = NPU_Cache::get_site_data($site, $network_plugins);
 
-            $admin_url = get_admin_url();
-
-            // Infos site
-            $site_name = sprintf(
-                '<strong><a href="%s">%s</a></strong><br><a href="%s" target="_blank">%s</a>',
-                esc_url( $admin_url ),
-                esc_html( get_bloginfo('name') ),
-                esc_url( get_site_url() ),
-                esc_html( get_site_url() )
-            );
-
-            // Plugins locaux
-            $active_plugins = get_option( 'active_plugins', [] );
-            $local_plugins  = array_diff( $active_plugins, $network_plugins );
-            $plugins_list   = $local_plugins ? '<ul>' : '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
-            foreach ( $local_plugins as $plugin ) {
-                $plugins_list .= '<li><a href="' . esc_url( $admin_url . 'plugins.php' ) . '" target="_blank">' . esc_html( $plugin ) . '</a></li>';
-            }
-            if ($local_plugins) $plugins_list .= '</ul>';
-
-            // Utilisateurs
-            $users = get_users([ 'blog_id' => $site->blog_id ]);
-            if ( $users ) {
-                $user_list = '<ul>';
-                foreach ( $users as $user ) {
-                    $roles = implode(', ', $user->roles);
-                    $user_list .= '<li><a href="' . esc_url( $admin_url . 'user-edit.php?user_id=' . $user->ID ) . '" target="_blank">' . esc_html( $user->user_login ) . '</a> <small style="color:#666;">(' . esc_html( $roles ) . ')</small></li>';
-                }
-                $user_list .= '</ul>';
-            } else {
-                $user_list = '<em>' . __( 'Aucun', 'rdc-core-mu-utilities' ) . '</em>';
+            if ($site_data === false) {
+                // En cas d'erreur, afficher un message minimal
+                $data[] = [
+                    'site' => sprintf(
+                        '<strong>%s</strong><br><span style="color:#d63638;">%s</span>',
+                        esc_html($site->domain . $site->path),
+                        __("Erreur de chargement", 'rdc-core-mu-utilities')
+                    ),
+                    'infos' => '',
+                    'users' => '',
+                    'cpt_builtin' => '',
+                    'cpt_custom' => '',
+                    'taxo_builtin' => '',
+                    'taxo_custom' => '',
+                    'plugins' => '',
+                ];
+                continue;
             }
 
-            // CPT
-            $post_types = get_post_types([], 'objects');
-            $cpt_builtin = [];
-            $cpt_custom  = [];
-
-            global $npu_cpt_origins;
-
-            foreach ($post_types as $pt) {
-                if (in_array($pt->name, ['revision','nav_menu_item','custom_css','customize_changeset','oembed_cache'])) continue;
-
-                $post_counts = wp_count_posts($pt->name);
-                $count  = isset($post_counts->publish) ? $post_counts->publish : 0;
-                $origin = $npu_cpt_origins[$pt->name] ?? ($pt->_builtin ? 'core' : 'inconnu');
-
-                $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'
-                    . esc_html($pt->labels->name) . '</a>: ' . intval($count)
-                    . ' <small style="color:#666;">(' . esc_html($origin) . ')</small></li>';
-
-                if ($pt->_builtin) {
-                    $cpt_builtin[] = $item;
-                } else {
-                    $cpt_custom[]  = $item;
-                }
-            }
-
-            $cpt_builtin_list = $cpt_builtin ? '<ul>' . implode('', $cpt_builtin) . '</ul>' : '<em>Aucun</em>';
-            $cpt_custom_list  = $cpt_custom  ? '<ul>' . implode('', $cpt_custom)  . '</ul>' : '<em>Aucun</em>';
-
-            // Taxonomies
-            $taxonomies   = get_taxonomies([], 'objects');
-            $tax_builtin  = [];
-            $tax_custom   = [];
-
-            global $npu_taxo_origins;
-
-            foreach ($taxonomies as $tax) {
-                if (in_array($tax->name, ['nav_menu','link_category','post_format'])) continue;
-
-                $terms  = get_terms([ 'taxonomy' => $tax->name, 'hide_empty' => false ]);
-                $count  = is_array($terms) ? count($terms) : 0;
-                $origin = $npu_taxo_origins[$tax->name] ?? ($tax->_builtin ? 'core' : 'inconnu');
-
-                $item = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax->name) . '" target="_blank">'
-                    . esc_html($tax->labels->name) . '</a>: ' . intval($count)
-                    . ' <small style="color:#666;">(' . esc_html($origin) . ')</small></li>';
-
-                if ($tax->_builtin) {
-                    $tax_builtin[] = $item;
-                } else {
-                    $tax_custom[]  = $item;
-                }
-            }
-
-            $tax_builtin_list = $tax_builtin ? '<ul>' . implode('', $tax_builtin) . '</ul>' : '<em>Aucune</em>';
-            $tax_custom_list  = $tax_custom  ? '<ul>' . implode('', $tax_custom)  . '</ul>' : '<em>Aucune</em>';
-
-
-            // Infos techniques
-            $theme = wp_get_theme();
-            $theme_info = sprintf(
-                '<a href="%s">%s</a> (v%s)',
-                esc_url( $admin_url . 'themes.php' ),
-                esc_html( $theme->get('Name') ),
-                esc_html( $theme->get('Version') )
-            );
-            global $wp_version;
-            $wp_info = 'WordPress ' . esc_html( $wp_version );
-            $lang = get_locale();
-            $total_attachments = wp_count_posts('attachment');
-            $attachments_total = array_sum((array) $total_attachments);
-            $valid_media_count = 0;
-            foreach ( ['inherit','publish'] as $status ) {
-                if ( isset($total_attachments->$status) ) $valid_media_count += $total_attachments->$status;
-            }
-            $media_files = isset($total_attachments->inherit) ? (int) $total_attachments->inherit : 0;
-            $last_post_date = get_lastpostdate('blog');
-
-            $infos = '<ul>';
-            $infos .= '<li>' . __( 'Thème', 'rdc-core-mu-utilities' ) . ': ' . $theme_info . '</li>';
-            $infos .= '<li>' . __( 'Version', 'rdc-core-mu-utilities' ) . ': ' . $wp_info . '</li>';
-            $infos .= '<li>' . __( 'Langue', 'rdc-core-mu-utilities' ) . ': ' . esc_html( $lang ) . '</li>';
-            $infos .= '<li>' . __( 'Pièces jointes (total)', 'rdc-core-mu-utilities' ) . ': ' . intval($attachments_total) . '</li>';
-            $infos .= '<li><span title="' . esc_attr__( 'Médias avec statut inherit ou publish (utilisables)', 'rdc-core-mu-utilities' ) . '" style="cursor:help;border-bottom:1px dotted #666;">'
-                    . __( 'Médias valides', 'rdc-core-mu-utilities' ) . '</span>: ' . intval($valid_media_count) . '</li>';
-            $infos .= '<li><span title="' . esc_attr__( 'Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement', 'rdc-core-mu-utilities' ) . '" style="cursor:help;border-bottom:1px dotted #666;">'
-                    . __( 'Fichiers média', 'rdc-core-mu-utilities' ) . '</span>: ' . intval($media_files) . '</li>';
-            $infos .= '<li>' . __( 'Dernier contenu', 'rdc-core-mu-utilities' ) . ': ' . esc_html($last_post_date ?: __( 'N/A', 'rdc-core-mu-utilities' )) . '</li>';
-            $infos .= '</ul>';
-
-            $data[] = [
-                'site'         => $site_name,
-                'infos'        => $infos,
-                'users'        => $user_list,
-                'cpt_builtin'  => $cpt_builtin_list,
-                'cpt_custom'   => $cpt_custom_list,
-                'taxo_builtin' => $tax_builtin_list,
-                'taxo_custom'  => $tax_custom_list,
-                'plugins'      => $plugins_list,
-            ];
-
-            restore_current_blog();
+            // Formater les données pour l'affichage
+            $data[] = $this->format_site_data($site_data);
         }
 
-        // Pagination
-        $per_page     = $this->get_items_per_page('sites_per_page', 20);
-        $current_page = $this->get_pagenum();
-        $total_items  = count($data);
-
-        $this->items = array_slice($data, (($current_page-1)*$per_page), $per_page);
+        $this->items = $data;
         $this->set_pagination_args([
             'total_items' => $total_items,
             'per_page'    => $per_page,
-            'total_pages' => ceil($total_items/$per_page),
+            'total_pages' => ceil($total_items / $per_page),
         ]);
+    }
+
+    /**
+     * Formate les données d'un site pour l'affichage
+     *
+     * @param array $site_data Données du site depuis le cache
+     * @return array Données formatées pour le tableau
+     */
+    private function format_site_data($site_data) {
+        $admin_url = $site_data['site_info']['admin_url'];
+
+        // Nom du site
+        $site_name = sprintf(
+            '<strong><a href="%s" target="_blank">%s</a></strong><br><a href="%s" target="_blank">%s</a>',
+            esc_url($admin_url),
+            esc_html($site_data['site_info']['name']),
+            esc_url($site_data['site_info']['url']),
+            esc_html($site_data['site_info']['url'])
+        );
+
+        // Infos techniques
+        $tech = $site_data['technical_info'];
+        $theme_info = sprintf(
+            '<a href="%s" target="_blank">%s</a> (v%s)',
+            esc_url($admin_url . 'themes.php'),
+            esc_html($tech['theme_name']),
+            esc_html($tech['theme_version'])
+        );
+
+        global $wp_version;
+        $infos = '<ul>';
+        $infos .= '<li>' . __("Thème", 'rdc-core-mu-utilities') . ': ' . $theme_info . '</li>';
+        $infos .= '<li>' . __("Version", 'rdc-core-mu-utilities') . ': WordPress ' . esc_html($wp_version) . '</li>';
+        $infos .= '<li>' . __("Langue", 'rdc-core-mu-utilities') . ': ' . esc_html($tech['locale']) . '</li>';
+        $infos .= '<li>' . __("Pièces jointes (total)", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</li>';
+        $infos .= '<li><span title="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
+                . __("Médias valides", 'rdc-core-mu-utilities') . '</span>: ' . intval($tech['valid_media_count']) . '</li>';
+        $infos .= '<li><span title="' . esc_attr__("Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
+                . __("Fichiers média", 'rdc-core-mu-utilities') . '</span>: ' . intval($tech['media_files']) . '</li>';
+        $infos .= '<li>' . __("Dernier contenu", 'rdc-core-mu-utilities') . ': ' . esc_html($tech['last_post_date'] ?: __("N/A", 'rdc-core-mu-utilities')) . '</li>';
+        $infos .= '</ul>';
+
+        // Utilisateurs
+        $users = $site_data['users'];
+        if ($users) {
+            $user_list = '<ul>';
+            foreach ($users as $user) {
+                $user_list .= '<li><a href="' . esc_url($admin_url . 'user-edit.php?user_id=' . $user['ID']) . '" target="_blank">'
+                    . esc_html($user['login']) . '</a> <small style="color:#666;">(' . esc_html($user['roles']) . ')</small></li>';
+            }
+            $user_list .= '</ul>';
+        } else {
+            $user_list = '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
+        }
+
+        // CPT natifs
+        $cpt_builtin_list = $this->format_post_types($site_data['post_types_builtin'], $admin_url);
+
+        // CPT personnalisés
+        $cpt_custom_list = $this->format_post_types($site_data['post_types_custom'], $admin_url);
+
+        // Taxonomies natives
+        $taxo_builtin_list = $this->format_taxonomies($site_data['taxonomies_builtin'], $admin_url);
+
+        // Taxonomies personnalisées
+        $taxo_custom_list = $this->format_taxonomies($site_data['taxonomies_custom'], $admin_url);
+
+        // Plugins locaux
+        $local_plugins = $site_data['local_plugins'];
+        if ($local_plugins) {
+            $plugins_list = '<ul>';
+            foreach ($local_plugins as $plugin) {
+                $plugins_list .= '<li><a href="' . esc_url($admin_url . 'plugins.php') . '" target="_blank">' . esc_html($plugin) . '</a></li>';
+            }
+            $plugins_list .= '</ul>';
+        } else {
+            $plugins_list = '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
+        }
+
+        return [
+            'site'         => $site_name,
+            'infos'        => $infos,
+            'users'        => $user_list,
+            'cpt_builtin'  => $cpt_builtin_list,
+            'cpt_custom'   => $cpt_custom_list,
+            'taxo_builtin' => $taxo_builtin_list,
+            'taxo_custom'  => $taxo_custom_list,
+            'plugins'      => $plugins_list,
+        ];
+    }
+
+    /**
+     * Formate les post types pour l'affichage
+     *
+     * @param array $post_types Liste des post types
+     * @param string $admin_url URL de l'admin du site
+     * @return string HTML formaté
+     */
+    private function format_post_types($post_types, $admin_url) {
+        if (empty($post_types)) {
+            return '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
+        }
+
+        $items = [];
+        foreach ($post_types as $pt) {
+            $items[] = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt['name']) . '" target="_blank">'
+                . esc_html($pt['label']) . '</a>: ' . intval($pt['count'])
+                . ' <small style="color:#666;">(' . esc_html($pt['origin']) . ')</small></li>';
+        }
+
+        return '<ul>' . implode('', $items) . '</ul>';
+    }
+
+    /**
+     * Formate les taxonomies pour l'affichage
+     *
+     * @param array $taxonomies Liste des taxonomies
+     * @param string $admin_url URL de l'admin du site
+     * @return string HTML formaté
+     */
+    private function format_taxonomies($taxonomies, $admin_url) {
+        if (empty($taxonomies)) {
+            return '<em>' . __("Aucune", 'rdc-core-mu-utilities') . '</em>';
+        }
+
+        $items = [];
+        foreach ($taxonomies as $tax) {
+            $items[] = '<li><a href="' . esc_url($admin_url . 'edit-tags.php?taxonomy=' . $tax['name']) . '" target="_blank">'
+                . esc_html($tax['label']) . '</a>: ' . intval($tax['count'])
+                . ' <small style="color:#666;">(' . esc_html($tax['origin']) . ')</small></li>';
+        }
+
+        return '<ul>' . implode('', $items) . '</ul>';
     }
 
     public function column_default($item, $column_name) {

@@ -155,7 +155,7 @@ class NPU_Core {
         if ( isset($_POST['npu_save']) && check_admin_referer('npu_save_options') ) {
             update_site_option('npu_enable_network_menu', isset($_POST['npu_enable_network_menu']) ? 1 : 0);
 
-            echo '<div class="updated"><p>' . __('Options sauvegardées', 'rdc-core-mu-utilities') . '</p></div>';
+            echo '<div class="updated"><p>' . __("Options sauvegardées", 'rdc-core-mu-utilities') . '</p></div>';
         }
 
         $enabled = self::is_menu_enabled();
