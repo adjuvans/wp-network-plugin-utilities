@@ -118,7 +118,7 @@ class NPU_Core {
         }
 
         // Sous-menu Analyse du réseau
-        add_submenu_page(
+        $hook = add_submenu_page(
             $top_menu_slug,
             __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
             __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
@@ -126,6 +126,9 @@ class NPU_Core {
             'npu-network-overview',
             [ 'NPU_Network_Overview', 'render_page' ]
         );
+
+        // Activer les Screen Options pour cette page
+        add_action("load-{$hook}", [ __CLASS__, 'add_screen_options' ]);
 
         // Sous-menu Options NPU
         add_submenu_page(
@@ -136,6 +139,40 @@ class NPU_Core {
             'npu-settings',
             [ __CLASS__, 'render_options_page' ]
         );
+    }
+
+    /**
+     * Ajoute les Screen Options pour la page d'analyse du réseau
+     */
+    public static function add_screen_options() {
+        $screen = get_current_screen();
+
+        if (!$screen) {
+            return;
+        }
+
+        // Dans l'admin réseau, WordPress ajoute -network à la fin de l'ID
+        if ($screen->id !== 'npu-core_page_npu-network-overview-network') {
+            return;
+        }
+
+        // Option pour le nombre de sites par page
+        add_screen_option('per_page', [
+            'label' => __('Sites par page', 'rdc-core-mu-utilities'),
+            'default' => 20,
+            'option' => 'sites_per_page',
+        ]);
+
+        // Instancier le tableau ici pour que WordPress détecte les colonnes
+        // Cela permet à WordPress de générer automatiquement les checkboxes de colonnes
+        $table = new NPU_Network_Overview();
+
+        // Définir les colonnes sur l'écran
+        $columns = $table->get_columns();
+        $hidden = $table->get_hidden_columns();
+
+        // Enregistrer les colonnes dans l'écran pour que WordPress génère les options
+        $screen->_column_headers = [$columns, $hidden, []];
     }
 
     /**

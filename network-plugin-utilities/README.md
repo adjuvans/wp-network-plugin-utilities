@@ -41,6 +41,12 @@ Affichage :
 - Affiche si c'est du core, un plugin, un mu-plugin ou un thème
 - Aide à comprendre la structure du site
 
+### 🎨 Interface personnalisable
+- **Options de l'écran** : Choisissez les colonnes à afficher/masquer
+- **Pagination configurable** : Définissez le nombre de sites par page
+- **Préférences sauvegardées** : Vos choix sont conservés par utilisateur
+- Colonnes masquées par défaut : CPT personnalisés et taxonomies personnalisées
+
 ## 📦 Installation
 
 En tant que must-use plugin, placez simplement le dossier dans :

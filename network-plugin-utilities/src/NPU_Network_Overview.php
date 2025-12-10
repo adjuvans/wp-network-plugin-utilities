@@ -64,10 +64,18 @@ class NPU_Network_Overview extends WP_List_Table {
         // Afficher le résumé des alertes
         echo self::render_alerts_panel();
 
+        // Créer et préparer le tableau
         $table = new self();
         $table->prepare_items();
+
+        // Formulaire pour les actions en masse et la pagination
+        echo '<form id="npu-network-sites-filter" method="get">';
+        echo '<input type="hidden" name="page" value="' . esc_attr($_REQUEST['page'] ?? '') . '" />';
+
+        // Afficher le tableau avec options d'écran et pagination
         $table->display();
 
+        echo '</form>';
         echo '</div>';
     }
 
@@ -76,6 +84,7 @@ class NPU_Network_Overview extends WP_List_Table {
             'singular' => 'site',
             'plural'   => 'sites',
             'ajax'     => false,
+            'screen'   => get_current_screen(),
         ]);
     }
 
@@ -98,7 +107,25 @@ class NPU_Network_Overview extends WP_List_Table {
         ];
     }
 
+    /**
+     * Colonnes masquées par défaut
+     * L'utilisateur peut les afficher via "Options de l'écran"
+     */
     public function get_hidden_columns() {
+        // Récupérer les préférences utilisateur
+        $user = get_current_user_id();
+        $screen = get_current_screen();
+
+        if ($screen) {
+            $hidden = get_user_option('manage' . $screen->id . 'columnshidden', $user);
+
+            // Si l'utilisateur a des préférences, les utiliser
+            if (!empty($hidden)) {
+                return $hidden;
+            }
+        }
+
+        // Sinon, colonnes masquées par défaut
         return [ 'cpt_custom', 'taxo_custom' ];
     }
 

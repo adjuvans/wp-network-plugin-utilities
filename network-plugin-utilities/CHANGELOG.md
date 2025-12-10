@@ -22,6 +22,10 @@
   - Panneau de résumé en haut de page
   - Badges colorés sur chaque site avec détails au survol
   - 3 niveaux de sévérité : erreur (rouge), avertissement (orange), info (bleu)
+- **Colonnes personnalisables** : Options de l'écran permettant d'afficher/masquer les colonnes
+  - Personnalisation du nombre de sites par page
+  - Préférences sauvegardées par utilisateur
+  - CPT personnalisés et taxonomies personnalisées masqués par défaut
 - **Configuration centralisée** : Nouveau fichier `config.php` pour gérer tous les paramètres
 - **Gestion d'erreurs améliorée** : Try/catch autour des opérations critiques avec logging
 
