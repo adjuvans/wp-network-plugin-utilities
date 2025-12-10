@@ -93,10 +93,8 @@ class NPU_Network_Overview extends WP_List_Table {
             'site'           => __( 'Site', 'rdc-core-mu-utilities' ),
             'infos'          => __( 'Infos techniques', 'rdc-core-mu-utilities' ),
             'users'          => __( 'Utilisateurs', 'rdc-core-mu-utilities' ),
-            'cpt_builtin'    => __( 'CPT natifs', 'rdc-core-mu-utilities' ),
-            'cpt_custom'     => __( 'CPT personnalisés', 'rdc-core-mu-utilities' ),
-            'taxo_builtin'   => __( 'Taxonomies natives', 'rdc-core-mu-utilities' ),
-            'taxo_custom'    => __( 'Taxonomies personnalisées', 'rdc-core-mu-utilities' ),
+            'contents_builtin' => __( 'Contenus natifs', 'rdc-core-mu-utilities' ),
+            'contents_custom'  => __( 'Contenus personnalisés', 'rdc-core-mu-utilities' ),
             'plugins'        => __( 'Plugins locaux', 'rdc-core-mu-utilities' ),
         ];
     }
@@ -126,7 +124,7 @@ class NPU_Network_Overview extends WP_List_Table {
         }
 
         // Sinon, colonnes masquées par défaut
-        return [ 'cpt_custom', 'taxo_custom' ];
+        return [ 'contents_custom' ];
     }
 
     /**
@@ -190,10 +188,8 @@ class NPU_Network_Overview extends WP_List_Table {
                     ),
                     'infos' => '',
                     'users' => '',
-                    'cpt_builtin' => '',
-                    'cpt_custom' => '',
-                    'taxo_builtin' => '',
-                    'taxo_custom' => '',
+                    'contents_builtin' => '',
+                    'contents_custom' => '',
                     'plugins' => '',
                 ];
                 continue;
@@ -343,10 +339,8 @@ class NPU_Network_Overview extends WP_List_Table {
             'site'         => $site_name,
             'infos'        => $infos,
             'users'        => $user_list,
-            'cpt_builtin'  => $cpt_builtin_list,
-            'cpt_custom'   => $cpt_custom_list,
-            'taxo_builtin' => $taxo_builtin_list,
-            'taxo_custom'  => $taxo_custom_list,
+            'contents_builtin' => $this->format_contents_column($cpt_builtin_list, $taxo_builtin_list),
+            'contents_custom'  => $this->format_contents_column($cpt_custom_list, $taxo_custom_list),
             'plugins'      => $plugins_list,
         ];
     }
@@ -393,6 +387,15 @@ class NPU_Network_Overview extends WP_List_Table {
         }
 
         return '<ul>' . implode('', $items) . '</ul>';
+    }
+
+    /**
+     * Formate l'affichage combiné des CPT et taxonomies.
+     */
+    private function format_contents_column($post_types_html, $taxonomies_html) {
+        $post_types_section = '<div><strong>' . __("Post types", 'rdc-core-mu-utilities') . '</strong><br>' . $post_types_html . '</div>';
+        $taxonomies_section = '<div style="margin-top:8px;"><strong>' . __("Taxonomies", 'rdc-core-mu-utilities') . '</strong><br>' . $taxonomies_html . '</div>';
+        return $post_types_section . $taxonomies_section;
     }
 
     public function column_default($item, $column_name) {
