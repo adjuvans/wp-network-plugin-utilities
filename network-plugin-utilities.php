@@ -12,7 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 define('NPU_PATH', __DIR__ . '/network-plugin-utilities/');
 define('NPU_URL',  plugin_dir_url(__FILE__) . 'network-plugin-utilities/');
 
-
 // Autoload 
 spl_autoload_register(function($class) {
     if (strpos($class, 'NPU_') !== 0) {

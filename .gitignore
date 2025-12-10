@@ -49,3 +49,6 @@ build/
 # Optional: Ignore dotenv config
 .env
 .env.local
+
+# AI
+.claude
