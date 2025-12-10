@@ -1,124 +1,138 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if (! defined('ABSPATH')) {
+    exit;
+}
 
-class NPU_Network_Sites_Menu {
+class NPU_Network_Sites_Menu
+{
+    private const ITEM_TYPE = 'network_site';
+    private const ITEM_OBJECT = 'network_site';
 
-    public static function init() {
-        // Admin : ajouter une meta box dans les menus
-        //add_action( 'admin_init', [ __CLASS__, 'add_nav_menu_metabox' ] );
-        //add_action( 'admin_head-nav-menus.php', [ __CLASS__, 'add_nav_menu_metabox' ] );
-        add_action( 'load-nav-menus.php', [ __CLASS__, 'add_nav_menu_metabox' ] );
+    public static function init(): void
+    {
+        add_action('load-nav-menus.php', [__CLASS__, 'addNavMenuMetabox']);
+        add_shortcode('network_sites_menu', [__CLASS__, 'shortcodeNetworkSitesMenu']);
 
-        // Shortcode : [network_sites_menu]
-        add_shortcode( 'network_sites_menu', [ __CLASS__, 'shortcode_network_sites_menu' ] );
+        add_filter('wp_setup_nav_menu_item', [__CLASS__, 'hydrateMenuItem']);
+        add_action('wp_update_nav_menu_item', [__CLASS__, 'persistMenuItem'], 10, 3);
+        add_action('admin_head-nav-menus.php', [__CLASS__, 'renderLockingAssets']);
+        add_filter('wp_nav_menu_item_custom_fields', [__CLASS__, 'renderLockedNotice'], 10, 4);
     }
 
     /**
-     * Vérifie si le menu des sites du réseau est activé
+     * Vérifie si le menu des sites du réseau est activé.
      */
-    protected static function is_menu_enabled() {
+    protected static function isMenuEnabled(): bool
+    {
         return (bool) get_site_option('npu_enable_network_menu', true);
     }
 
     /**
-     * Récupère les sites du réseau
+     * Récupère les sites publics du réseau.
      */
-    protected static function get_sites_list() {
-        if ( ! self::is_menu_enabled() ) {
-        return [];
-    }
+    protected static function getSitesList(): array
+    {
+        if (! self::isMenuEnabled()) {
+            return [];
+        }
 
         $sites = get_sites([
             'public'   => 1,
             'archived' => 0,
-            'deleted'  => 0
+            'deleted'  => 0,
         ]);
 
         $out = [];
-        foreach ( $sites as $site ) {
+        foreach ($sites as $site) {
             $out[] = [
-                'id'   => $site->blog_id,
-                'url'  => get_site_url( $site->blog_id ),
-                'name' => get_blog_option( $site->blog_id, 'blogname' )
+                'id'   => (int) $site->blog_id,
+                'url'  => self::getSiteUrl((int) $site->blog_id),
+                'name' => self::getSiteTitle((int) $site->blog_id),
             ];
         }
+
         return $out;
     }
 
     /**
-     * Ajout d’une metabox "Sites du réseau" dans l’écran Apparence > Menus
+     * Ajoute la metabox "Sites du réseau" dans Apparence > Menus.
      */
-    public static function add_nav_menu_metabox() {
+    public static function addNavMenuMetabox(): void
+    {
         add_meta_box(
             'network_sites_nav_links',
-            __( 'Sites du réseau', 'rdc-core-mu-utilities' ),
-            [ __CLASS__, 'render_nav_menu_metabox' ],
+            __('Sites du réseau', 'rdc-core-mu-utilities'),
+            [__CLASS__, 'renderNavMenuMetabox'],
             'nav-menus',
             'side',
             'default'
         );
     }
 
-    public static function render_nav_menu_metabox() {
-        $sites = self::get_sites_list();
+    /**
+     * Rend la metabox qui alimente les items de type network_site.
+     */
+    public static function renderNavMenuMetabox(): void
+    {
+        $sites = self::getSitesList();
         ?>
         <div id="posttype-network-sites" class="posttypediv">
             <div id="tabs-panel-posttype-network-sites" class="tabs-panel tabs-panel-active">
                 <ul id="posttype-network-sites-checklist" class="categorychecklist form-no-clear">
-                    <?php foreach ( $sites as $i => $site ) : 
-                        $item_id = - ( $i + 1 );
+                    <?php foreach ($sites as $i => $site) :
+                        $item_id = -($i + 1);
                     ?>
                         <li>
                             <label class="menu-item-title">
                                 <input type="checkbox"
-                                    class="menu-item-checkbox"
-                                    name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-object-id]"
-                                    value="-1" />
-                                <?php echo esc_html( $site['name'] ); ?>
+                                       class="menu-item-checkbox"
+                                       name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-object-id]"
+                                       value="<?php echo esc_attr($site['id']); ?>" />
+                                <?php echo esc_html($site['name']); ?>
                             </label>
 
                             <input type="hidden" class="menu-item-db-id"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-db-id]"
-                                value="0" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-db-id]"
+                                   value="0" />
                             <input type="hidden" class="menu-item-object"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-object]"
-                                value="custom" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-object]"
+                                   value="<?php echo esc_attr(self::ITEM_OBJECT); ?>" />
                             <input type="hidden" class="menu-item-parent-id"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-parent-id]"
-                                value="0" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-parent-id]"
+                                   value="0" />
                             <input type="hidden" class="menu-item-type"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-type]"
-                                value="custom" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-type]"
+                                   value="<?php echo esc_attr(self::ITEM_TYPE); ?>" />
                             <input type="hidden" class="menu-item-title"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-title]"
-                                value="<?php echo esc_attr( $site['name'] ); ?>" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-title]"
+                                   value="<?php echo esc_attr($site['name']); ?>" />
                             <input type="hidden" class="menu-item-url"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-url]"
-                                value="<?php echo esc_url( $site['url'] ); ?>" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-url]"
+                                   value="<?php echo esc_url($site['url']); ?>" />
                             <input type="hidden" class="menu-item-target"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-target]"
-                                value="" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-target]"
+                                   value="" />
                             <input type="hidden" class="menu-item-attr-title"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-attr-title]"
-                                value="" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-attr-title]"
+                                   value="" />
                             <input type="hidden" class="menu-item-classes"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-classes]"
-                                value="" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-classes]"
+                                   value="" />
                             <input type="hidden" class="menu-item-xfn"
-                                name="menu-item[<?php echo esc_attr( $item_id ); ?>][menu-item-xfn]"
-                                value="" />
+                                   name="menu-item[<?php echo esc_attr($item_id); ?>][menu-item-xfn]"
+                                   value="" />
                         </li>
                     <?php endforeach; ?>
                 </ul>
             </div>
             <p class="button-controls">
                 <span class="add-to-menu">
-                    <input type="submit"<?php disabled( empty( $sites ) ); ?>
-                        class="button-secondary submit-add-to-menu right"
-                        value="<?php esc_attr_e( 'Ajouter au menu' ); ?>"
-                        name="add-custom-menu-item"
-                        id="submit-posttype-network-sites" />
+                    <input type="submit"<?php disabled(empty($sites)); ?>
+                           class="button-secondary submit-add-to-menu right"
+                           value="<?php esc_attr_e('Ajouter au menu'); ?>"
+                           name="add-custom-menu-item"
+                           id="submit-posttype-network-sites" />
                     <span class="spinner"></span>
                 </span>
             </p>
@@ -127,39 +141,153 @@ class NPU_Network_Sites_Menu {
     }
 
     /**
-     * Affichage dynamique (shortcode)
+     * Empêche la modification des champs natifs et affiche une note dans l'éditeur de menu.
      */
-    public static function shortcode_network_sites_menu( $atts ) {
-        $atts = shortcode_atts([
-            'class'   => 'network-sites-menu',
-            'wrapper' => 'ul'
-        ], $atts );
+    public static function renderLockedNotice($item_id, $item, $depth, $args): void
+    {
+        if (self::ITEM_OBJECT !== $item->object && self::ITEM_TYPE !== $item->type) {
+            return;
+        }
 
-        return self::render_sites_list( $atts['wrapper'], $atts['class'] );
+        printf(
+            '<p class="description description-wide npu-network-site-lock">%s</p>',
+            esc_html__('URL verrouillée (site du réseau). Le titre peut être personnalisé.', 'rdc-core-mu-utilities')
+        );
     }
 
     /**
-     * Rend la liste HTML des sites
+     * Ajoute un style/script léger pour masquer les champs URL/Titre dans l'admin.
      */
-    public static function render_sites_list( $wrapper = 'ul', $class = 'network-sites-menu' ) {
-        $sites = self::get_sites_list();
-        if ( empty( $sites ) ) {
+    public static function renderLockingAssets(): void
+    {
+        ?>
+        <style>
+            .menu-item-type-<?php echo esc_attr(self::ITEM_TYPE); ?> .field-url {
+                display: none;
+            }
+            .menu-item-type-<?php echo esc_attr(self::ITEM_TYPE); ?> .npu-network-site-lock {
+                margin: 10px 0;
+                padding: 8px 10px;
+                background: #f6f7f7;
+                border: 1px solid #dcdcde;
+                border-radius: 4px;
+            }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.menu-item-type-<?php echo esc_attr(self::ITEM_TYPE); ?> .edit-menu-item-url').forEach(function (input) {
+                    input.setAttribute('readonly', 'readonly');
+                    input.classList.add('disabled');
+                });
+            });
+        </script>
+        <?php
+    }
+
+    /**
+     * Force le type network_site à hydrater automatiquement URL et titre.
+     */
+    public static function hydrateMenuItem($item)
+    {
+        if (self::ITEM_OBJECT !== $item->object && self::ITEM_TYPE !== $item->type) {
+            return $item;
+        }
+
+        $blog_id = (int) $item->object_id;
+        $item->type = self::ITEM_TYPE;
+        $item->object = self::ITEM_OBJECT;
+        $item->type_label = __('Site du réseau', 'rdc-core-mu-utilities');
+        $item->url = self::getSiteUrl($blog_id);
+        if (empty($item->title)) {
+            $item->title = self::getSiteTitle($blog_id);
+            $item->post_title = $item->title;
+        }
+
+        return $item;
+    }
+
+    /**
+     * Force la sauvegarde du type network_site et neutralise les modifications manuelles.
+     */
+    public static function persistMenuItem($menu_id, $menu_item_db_id, $args): void
+    {
+        if (! isset($args['menu-item-object']) || self::ITEM_OBJECT !== $args['menu-item-object']) {
+            return;
+        }
+
+        $blog_id = isset($args['menu-item-object-id']) ? absint($args['menu-item-object-id']) : 0;
+
+        // Si l'ID n'est pas envoyé (édition), récupérer celui stocké.
+        if (! $blog_id && $menu_item_db_id) {
+            $blog_id = (int) get_post_meta($menu_item_db_id, '_menu_item_object_id', true);
+        }
+
+        if (! $blog_id) {
+            return;
+        }
+
+        update_post_meta($menu_item_db_id, '_menu_item_type', self::ITEM_TYPE);
+        update_post_meta($menu_item_db_id, '_menu_item_object', self::ITEM_OBJECT);
+        update_post_meta($menu_item_db_id, '_menu_item_object_id', $blog_id);
+
+        $url = self::getSiteUrl($blog_id);
+        update_post_meta($menu_item_db_id, '_menu_item_url', esc_url_raw($url));
+    }
+
+    /**
+     * Affichage dynamique (shortcode).
+     */
+    public static function shortcodeNetworkSitesMenu($atts)
+    {
+        $atts = shortcode_atts([
+            'class'   => 'network-sites-menu',
+            'wrapper' => 'ul',
+        ], $atts);
+
+        return self::renderSitesList($atts['wrapper'], $atts['class']);
+    }
+
+    /**
+     * Rend la liste HTML des sites pour l'affichage front.
+     */
+    public static function renderSitesList($wrapper = 'ul', $class = 'network-sites-menu')
+    {
+        $sites = self::getSitesList();
+        if (empty($sites)) {
             return '';
         }
 
         ob_start();
-        echo '<' . tag_escape( $wrapper ) . ' class="' . esc_attr( $class ) . '">';
-        foreach ( $sites as $site ) {
-            echo '<li><a href="' . esc_url( $site['url'] ) . '">' . esc_html( $site['name'] ) . '</a></li>';
+        echo '<' . tag_escape($wrapper) . ' class="' . esc_attr($class) . '">';
+        foreach ($sites as $site) {
+            echo '<li><a href="' . esc_url($site['url']) . '">' . esc_html($site['name']) . '</a></li>';
         }
-        echo '</' . tag_escape( $wrapper ) . '>';
+        echo '</' . tag_escape($wrapper) . '>';
+
         return ob_get_clean();
+    }
+
+    private static function getSiteUrl(int $blog_id): string
+    {
+        return get_site_url($blog_id);
+    }
+
+    private static function getSiteTitle(int $blog_id): string
+    {
+        $title = get_blog_option($blog_id, 'blogname');
+
+        if (! $title) {
+            $title = sprintf(__('Site #%d', 'rdc-core-mu-utilities'), $blog_id);
+        }
+
+        return (string) $title;
     }
 }
 
 /**
- * Fonction helper globale pour l'appel direct en PHP
+ * Fonction helper globale pour l'appel direct en PHP.
  */
-function rdc_network_sites_menu( $wrapper = 'ul', $class = 'network-sites-menu' ) {
-    echo NPU_Network_Sites_Menu::render_sites_list( $wrapper, $class );
+function rdc_network_sites_menu($wrapper = 'ul', $class = 'network-sites-menu')
+{
+    echo NPU_Network_Sites_Menu::renderSitesList($wrapper, $class);
 }
