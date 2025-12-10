@@ -141,8 +141,8 @@ class NPU_Cache {
 
         $media_files = isset($total_attachments->inherit) ? (int) $total_attachments->inherit : 0;
 
-        // Récupérer la date du dernier contenu publié selon les post types configurés
-        $last_post_date = self::get_last_content_date();
+        // Récupérer le dernier contenu publié selon les post types configurés
+        $last_content = self::get_last_content_info();
 
         return [
             'theme_name' => $theme->get('Name'),
@@ -154,18 +154,21 @@ class NPU_Cache {
             'attachments_total' => $attachments_total,
             'valid_media_count' => $valid_media_count,
             'media_files' => $media_files,
-            'last_post_date' => $last_post_date,
+            // Compat historique : conserver la date seule
+            'last_post_date' => $last_content['date'] ?? null,
+            // Nouveaux détails
+            'last_content' => $last_content,
         ];
     }
 
     /**
-     * Récupère la date du dernier contenu publié/modifié pour un site
+     * Récupère les infos du dernier contenu publié/modifié pour un site
      * Utilise les post types configurés dans les options
      * Priorité : date de modification (post_modified_gmt) > date de publication (post_date_gmt)
      *
-     * @return string|null Date au format MySQL ou null si aucun contenu
+     * @return array|null
      */
-    private static function get_last_content_date() {
+    private static function get_last_content_info() {
         // Récupérer les post types à analyser depuis les options
         $allowed_post_types = get_site_option('npu_activity_post_types', ['post', 'page']);
 
@@ -194,24 +197,44 @@ class NPU_Cache {
 
             // Si la date de modification existe et n'est pas '0000-00-00 00:00:00'
             if ($post_modified_gmt && $post_modified_gmt !== '0000-00-00 00:00:00') {
-                return $post_modified_gmt;
+                return [
+                    'date'  => $post_modified_gmt,
+                    'type'  => get_post_type($post_id),
+                    'title' => get_the_title($post_id),
+                    'id'    => $post_id,
+                ];
             }
 
             // Fallback : Date de publication GMT
             $post_date_gmt = get_post_field('post_date_gmt', $post_id);
             if ($post_date_gmt && $post_date_gmt !== '0000-00-00 00:00:00') {
-                return $post_date_gmt;
+                return [
+                    'date'  => $post_date_gmt,
+                    'type'  => get_post_type($post_id),
+                    'title' => get_the_title($post_id),
+                    'id'    => $post_id,
+                ];
             }
 
             // Si aucune date GMT n'est disponible, utiliser les dates locales
             $post_modified = get_post_field('post_modified', $post_id);
             if ($post_modified && $post_modified !== '0000-00-00 00:00:00') {
-                return $post_modified;
+                return [
+                    'date'  => $post_modified,
+                    'type'  => get_post_type($post_id),
+                    'title' => get_the_title($post_id),
+                    'id'    => $post_id,
+                ];
             }
 
             // Dernier fallback : date de publication locale
             $post_date = get_post_field('post_date', $post_id);
-            return $post_date;
+            return [
+                'date'  => $post_date,
+                'type'  => get_post_type($post_id),
+                'title' => get_the_title($post_id),
+                'id'    => $post_id,
+            ];
         }
 
         return null;

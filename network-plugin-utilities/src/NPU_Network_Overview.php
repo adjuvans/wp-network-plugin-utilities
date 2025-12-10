@@ -222,10 +222,11 @@ class NPU_Network_Overview extends WP_List_Table {
 
         $tech_meta = $site_data['technical_info'];
         $site_submeta = sprintf(
-            '<div class="npu-site-meta"><small>ID #%d | WP %s | PHP %s | %s</small></div>',
+            '<div class="npu-site-meta"><small>ID #%d — WP %s — PHP %s — MySQL %s — Langue %s</small></div>',
             intval($site_data['blog_id']),
             esc_html($tech_meta['wp_version'] ?? ''),
             esc_html($tech_meta['php_version'] ?? ''),
+            esc_html($tech_meta['mysql_version'] ?? ''),
             esc_html($tech_meta['locale'] ?? '')
         );
 
@@ -251,20 +252,31 @@ class NPU_Network_Overview extends WP_List_Table {
 
         $infos = '<ul>';
         $infos .= '<li>' . __("Thème", 'rdc-core-mu-utilities') . ': ' . $theme_info . '</li>';
-        $infos .= '<li>' . __("Version", 'rdc-core-mu-utilities') . ': WordPress ' . esc_html($tech['wp_version'] ?? '') . '</li>';
-        if (! empty($tech['php_version'])) {
-            $infos .= '<li>PHP: ' . esc_html($tech['php_version']) . '</li>';
-        }
-        if (! empty($tech['mysql_version'])) {
-            $infos .= '<li>MySQL: ' . esc_html($tech['mysql_version']) . '</li>';
-        }
-        $infos .= '<li>' . __("Langue", 'rdc-core-mu-utilities') . ': ' . esc_html($tech['locale']) . '</li>';
         $infos .= '<li>' . __("Pièces jointes (total)", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</li>';
         $infos .= '<li><span title="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
                 . __("Médias valides", 'rdc-core-mu-utilities') . '</span>: ' . intval($tech['valid_media_count']) . '</li>';
         $infos .= '<li><span title="' . esc_attr__("Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement", 'rdc-core-mu-utilities') . '" style="cursor:help;border-bottom:1px dotted #666;">'
                 . __("Fichiers média", 'rdc-core-mu-utilities') . '</span>: ' . intval($tech['media_files']) . '</li>';
-        $infos .= '<li>' . __("Dernier contenu", 'rdc-core-mu-utilities') . ': ' . esc_html($tech['last_post_date'] ?: __("N/A", 'rdc-core-mu-utilities')) . '</li>';
+        $last_content = $tech['last_content'] ?? null;
+        if ($last_content && ! empty($last_content['date'])) {
+            $type_label = $this->get_post_type_label($last_content['type'] ?? '');
+            $title_label = $last_content['title'] ?? '';
+            $relative = $this->format_relative_datetime($last_content['date']);
+            $exact = $this->format_exact_datetime($last_content['date']);
+            $tooltip = sprintf(
+                /* translators: 1: exact datetime, 2: title, 3: type */
+                __('Dernière activité détectée le %1$s sur le contenu "%2$s" (post_type : %3$s)', 'rdc-core-mu-utilities'),
+                esc_html($exact),
+                esc_html($title_label),
+                esc_html($type_label)
+            );
+
+            $infos .= '<li><span class="npu-last-activity" title="' . esc_attr($tooltip) . '">'
+                . __('Dernière activité', 'rdc-core-mu-utilities') . '</span>: ' . esc_html($relative)
+                . '</li>';
+        } else {
+            $infos .= '<li>' . __("Dernière activité", 'rdc-core-mu-utilities') . ': ' . __("N/A", 'rdc-core-mu-utilities') . '</li>';
+        }
         $infos .= '</ul>';
 
         // Utilisateurs
@@ -396,6 +408,59 @@ class NPU_Network_Overview extends WP_List_Table {
         $post_types_section = '<div><strong>' . __("Post types", 'rdc-core-mu-utilities') . '</strong><br>' . $post_types_html . '</div>';
         $taxonomies_section = '<div style="margin-top:8px;"><strong>' . __("Taxonomies", 'rdc-core-mu-utilities') . '</strong><br>' . $taxonomies_html . '</div>';
         return $post_types_section . $taxonomies_section;
+    }
+
+    /**
+     * Affiche une date relative en français (human_time_diff).
+     */
+    private function format_relative_datetime($date_string) {
+        $timestamp = $this->to_timestamp($date_string);
+        if (! $timestamp) {
+            return $date_string;
+        }
+
+        $now = current_time('timestamp');
+        $human = human_time_diff($timestamp, $now);
+        return sprintf(__("il y a %s", 'rdc-core-mu-utilities'), $human);
+    }
+
+    /**
+     * Formatte une date exacte jj/mm/aaaa à hh:ii selon WP.
+     */
+    private function format_exact_datetime($date_string) {
+        $timestamp = $this->to_timestamp($date_string);
+        if (! $timestamp) {
+            return $date_string;
+        }
+
+        return wp_date('d/m/Y à H:i', $timestamp);
+    }
+
+    /**
+     * Convertit une date string en timestamp WP.
+     */
+    private function to_timestamp($date_string) {
+        $timestamp = strtotime($date_string . ' UTC');
+        if (! $timestamp) {
+            $timestamp = strtotime($date_string);
+        }
+        return $timestamp ?: null;
+    }
+
+    /**
+     * Récupère un label lisible pour un post type.
+     */
+    private function get_post_type_label($post_type) {
+        if (! $post_type) {
+            return '';
+        }
+
+        $obj = get_post_type_object($post_type);
+        if ($obj && ! empty($obj->labels->singular_name)) {
+            return $obj->labels->singular_name;
+        }
+
+        return $post_type;
     }
 
     public function column_default($item, $column_name) {
