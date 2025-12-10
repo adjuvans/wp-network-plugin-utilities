@@ -2,9 +2,18 @@
 
 ## [1.6.0] - 2025-12-10
 
+### 🐛 Correction critique
+- **Erreur fatale PHP** : Correction des apostrophes non échappées dans les chaînes de traduction i18n
+  - Remplacement des guillemets simples par des guillemets doubles dans toutes les fonctions `__()`
+  - Affectait : NPU_Network_Overview.php et NPU_Core.php
+
 ### 🚀 Nouvelles fonctionnalités
 - **Système de cache intelligent** : Les données des sites sont maintenant mises en cache (durée configurable)
 - **Bouton de rafraîchissement** : Permet de rafraîchir manuellement le cache avec rate limiting
+- **Export de données** :
+  - Export CSV : Toutes les données des sites dans un format Excel/Google Sheets
+  - Export JSON : Format structuré pour intégration avec d'autres outils
+  - Boutons directement dans l'interface d'administration
 - **Configuration centralisée** : Nouveau fichier `config.php` pour gérer tous les paramètres
 - **Gestion d'erreurs améliorée** : Try/catch autour des opérations critiques avec logging
 
@@ -31,6 +40,7 @@
 ### 📦 Nouveaux fichiers
 - `network-plugin-utilities/config.php` - Configuration centralisée
 - `network-plugin-utilities/src/NPU_Cache.php` - Classe de gestion du cache
+- `network-plugin-utilities/src/NPU_Export.php` - Classe de gestion des exports
 - `network-plugin-utilities/CHANGELOG.md` - Historique des modifications
 
 ### 🔄 Hooks automatiques ajoutés

@@ -41,6 +41,24 @@ class NPU_Network_Overview extends WP_List_Table {
             . __("Rafraîchir le cache", 'rdc-core-mu-utilities')
             . '</a>';
 
+        // Boutons d'export
+        $export_csv_url = wp_nonce_url(
+            add_query_arg('npu_export', 'csv'),
+            'npu_export',
+            'npu_nonce'
+        );
+        $export_json_url = wp_nonce_url(
+            add_query_arg('npu_export', 'json'),
+            'npu_export',
+            'npu_nonce'
+        );
+        echo ' <a href="' . esc_url($export_csv_url) . '" class="page-title-action">'
+            . __("Exporter CSV", 'rdc-core-mu-utilities')
+            . '</a>';
+        echo ' <a href="' . esc_url($export_json_url) . '" class="page-title-action">'
+            . __("Exporter JSON", 'rdc-core-mu-utilities')
+            . '</a>';
+
         echo '</h1>';
 
         $table = new self();
