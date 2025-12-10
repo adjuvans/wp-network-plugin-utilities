@@ -52,7 +52,7 @@ class NPU_Network_Sites_Menu {
     public static function add_nav_menu_metabox() {
         add_meta_box(
             'network_sites_nav_links',
-            __( 'Sites du réseau', 'rdc-core' ),
+            __( 'Sites du réseau', 'rdc-core-mu-utilities' ),
             [ __CLASS__, 'render_nav_menu_metabox' ],
             'nav-menus',
             'side',
@@ -157,11 +157,8 @@ class NPU_Network_Sites_Menu {
     }
 }
 
-// Initialisation
-NPU_Network_Sites_Menu::init();
-
 /**
- * Fonction helper globale pour l’appel direct en PHP
+ * Fonction helper globale pour l'appel direct en PHP
  */
 function rdc_network_sites_menu( $wrapper = 'ul', $class = 'network-sites-menu' ) {
     echo NPU_Network_Sites_Menu::render_sites_list( $wrapper, $class );

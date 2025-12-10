@@ -106,7 +106,8 @@ class NPU_Network_Overview extends WP_List_Table {
             foreach ($post_types as $pt) {
                 if (in_array($pt->name, ['revision','nav_menu_item','custom_css','customize_changeset','oembed_cache'])) continue;
 
-                $count  = wp_count_posts($pt->name)->publish ?? 0;
+                $post_counts = wp_count_posts($pt->name);
+                $count  = isset($post_counts->publish) ? $post_counts->publish : 0;
                 $origin = $npu_cpt_origins[$pt->name] ?? ($pt->_builtin ? 'core' : 'inconnu');
 
                 $item  = '<li><a href="' . esc_url($admin_url . 'edit.php?post_type=' . $pt->name) . '" target="_blank">'

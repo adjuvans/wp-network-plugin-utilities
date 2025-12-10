@@ -149,14 +149,7 @@ class NPU_Core {
     }
 
     /**
-     * Page de stats (admin réseau)
-     */
-    public static function render_stat_page() {
-        NPU_Network_Overview::render_page();
-    }
-
-    /**
-     * Page d’options du plugin (admin réseau)
+     * Page d'options du plugin (admin réseau)
      */
     public static function render_options_page() {
         if ( isset($_POST['npu_save']) && check_admin_referer('npu_save_options') ) {
@@ -199,12 +192,13 @@ class NPU_Core {
      * Charger CSS admin
      */
     public static function enqueue_assets($hook) {
-        if ($hook === 'sites_page_network-plugins-overview') {
+        // Le hook correct pour la page "Analyse du réseau" (sous-menu de NPU core)
+        if ($hook === 'npu-core_page_npu-network-overview') {
             wp_enqueue_style(
                 'npu-admin',
                 NPU_URL . 'assets/css/npu-admin.min.css',
                 [],
-                '1.0'
+                '1.5'
             );
         }
     }
