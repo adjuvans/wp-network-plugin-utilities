@@ -14,7 +14,7 @@
 
   // Accent
   --npu-accent: #2271b1;
-  --npu-accent-2: #1e5c94;
+  --npu-accent-2: #1b5c91;
   --npu-accent-light: rgba(34, 113, 177, 0.1);
 
   // Sémantique
@@ -37,71 +37,6 @@
   // Transitions
   --npu-transition: 0.2s ease;
   --npu-transition-fast: 0.15s ease;
-}
-
-// Couleurs - Mode sombre
-@media (prefers-color-scheme: dark) {
-  :root {
-    --npu-border: #2f3337;
-    --npu-bg: #1c1f23;
-    --npu-bg-strong: #2a2e33;
-    --npu-text: #f3f4f6;
-    --npu-text-muted: #9ca3af;
-    --npu-accent: #4ea8ff;
-    --npu-accent-2: #3c8ad6;
-    --npu-accent-light: rgba(78, 168, 255, 0.15);
-    --npu-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-    --npu-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-    --npu-tooltip-bg: #0f1115;
-    --npu-tooltip-text: #f3f4f6;
-    --npu-tooltip-link: #93c5fd;
-    --npu-error-light: rgba(214, 54, 56, 0.15);
-    --npu-warning-light: rgba(219, 166, 23, 0.15);
-    --npu-success-light: rgba(0, 135, 90, 0.15);
-    --npu-info-light: rgba(78, 168, 255, 0.15);
-  }
-}
-
-// Override mode dark forcé
-[data-npu-color-scheme="dark"] {
-  --npu-border: #2f3337;
-  --npu-bg: #1c1f23;
-  --npu-bg-strong: #2a2e33;
-  --npu-text: #f3f4f6;
-  --npu-text-muted: #9ca3af;
-  --npu-accent: #4ea8ff;
-  --npu-accent-2: #3c8ad6;
-  --npu-accent-light: rgba(78, 168, 255, 0.15);
-  --npu-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --npu-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --npu-tooltip-bg: #0f1115;
-  --npu-tooltip-text: #f3f4f6;
-  --npu-tooltip-link: #93c5fd;
-  --npu-error-light: rgba(214, 54, 56, 0.15);
-  --npu-warning-light: rgba(219, 166, 23, 0.15);
-  --npu-success-light: rgba(0, 135, 90, 0.15);
-  --npu-info-light: rgba(78, 168, 255, 0.15);
-}
-
-// Override mode light forcé
-[data-npu-color-scheme="light"] {
-  --npu-border: #dcdcde;
-  --npu-bg: #f6f7f7;
-  --npu-bg-strong: #eef1f3;
-  --npu-text: #1d2327;
-  --npu-text-muted: #646970;
-  --npu-accent: #2271b1;
-  --npu-accent-2: #1e5c94;
-  --npu-accent-light: rgba(34, 113, 177, 0.1);
-  --npu-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  --npu-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --npu-tooltip-bg: #1d2327;
-  --npu-tooltip-text: #fff;
-  --npu-tooltip-link: #7eb5e0;
-  --npu-error-light: rgba(214, 54, 56, 0.1);
-  --npu-warning-light: rgba(219, 166, 23, 0.1);
-  --npu-success-light: rgba(0, 135, 90, 0.1);
-  --npu-info-light: rgba(34, 113, 177, 0.1);
 }
 
 // Espacements
