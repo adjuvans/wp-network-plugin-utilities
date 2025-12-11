@@ -99,13 +99,25 @@ class NPU_Network_Overview extends WP_List_Table {
         $icon_custom = '<span class="dashicons dashicons-admin-customizer"></span> ';
         $icon_plugins = '<span class="dashicons dashicons-admin-plugins"></span> ';
 
+        $tooltips = [
+            'site'            => __('Nom du site, alertes et métadonnées techniques (ID, versions WP/PHP/MySQL, locale).', 'rdc-core-mu-utilities'),
+            'infos'           => __('Thème actif, volumes de médias et dernière activité détectée.', 'rdc-core-mu-utilities'),
+            'users'           => __('Utilisateurs ayant accès au site avec leurs rôles.', 'rdc-core-mu-utilities'),
+            'contents_builtin'=> __('Post types et taxonomies WordPress par défaut.', 'rdc-core-mu-utilities'),
+            'contents_custom' => __('Custom Post Types et taxonomies ajoutées par plugins ou thèmes.', 'rdc-core-mu-utilities'),
+            'plugins'         => __('Plugins activés uniquement sur ce site (hors plugins réseau).', 'rdc-core-mu-utilities'),
+        ];
+
         return [
-            'site'           => $icon_site . __( 'Site', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Nom du site avec alertes et métadonnées techniques (ID, versions WP/PHP/MySQL, locale)', 'rdc-core-mu-utilities')),
-            'infos'          => $icon_info . __( 'Infos techniques', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Thème actif, nombre de médias, dernière activité détectée sur le site', 'rdc-core-mu-utilities')),
-            'users'          => $icon_users . __( 'Utilisateurs', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Liste des utilisateurs avec leurs rôles sur ce site', 'rdc-core-mu-utilities')),
-            'contents_builtin' => $icon_posts . __( 'Contenus natifs', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Post types et taxonomies WordPress par défaut (articles, pages, catégories, tags)', 'rdc-core-mu-utilities')),
-            'contents_custom'  => $icon_custom . __( 'Contenus personnalisés', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Custom Post Types et taxonomies ajoutés par les plugins ou thèmes', 'rdc-core-mu-utilities')),
-            'plugins'        => $icon_plugins . __( 'Plugins locaux', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Plugins activés uniquement sur ce site (hors plugins réseau)', 'rdc-core-mu-utilities')),
+            // Colonne triable : tooltip sur icône dédiée (injectée côté JS pour rester hors lien de tri)
+            'site'             => $icon_site . __( 'Site', 'rdc-core-mu-utilities' ) . '<span class="npu-header-tip-data" data-tooltip="' . esc_attr($tooltips['site']) . '"></span>',
+
+            // Colonnes non triables : tooltip directement sur le titre
+            'infos'            => $icon_info . '<span class="npu-tooltip npu-header-title" data-tooltip="' . esc_attr($tooltips['infos']) . '">' . __( 'Infos techniques', 'rdc-core-mu-utilities' ) . '</span>',
+            'users'            => $icon_users . '<span class="npu-tooltip npu-header-title" data-tooltip="' . esc_attr($tooltips['users']) . '">' . __( 'Utilisateurs', 'rdc-core-mu-utilities' ) . '</span>',
+            'contents_builtin' => $icon_posts . '<span class="npu-tooltip npu-header-title" data-tooltip="' . esc_attr($tooltips['contents_builtin']) . '">' . __( 'Contenus natifs', 'rdc-core-mu-utilities' ) . '</span>',
+            'contents_custom'  => $icon_custom . '<span class="npu-tooltip npu-header-title" data-tooltip="' . esc_attr($tooltips['contents_custom']) . '">' . __( 'Contenus personnalisés', 'rdc-core-mu-utilities' ) . '</span>',
+            'plugins'          => $icon_plugins . '<span class="npu-tooltip npu-header-title" data-tooltip="' . esc_attr($tooltips['plugins']) . '">' . __( 'Plugins locaux', 'rdc-core-mu-utilities' ) . '</span>',
         ];
     }
 

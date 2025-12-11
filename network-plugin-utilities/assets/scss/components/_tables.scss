@@ -7,13 +7,19 @@
 .wp-list-table {
   table-layout: fixed;
   width: 100%;
+  overflow: visible;
+
+  thead,
+  tr {
+    overflow: visible;
+  }
 
   th,
   td {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible; // Laisse les tooltips dépasser
     vertical-align: top;
     word-wrap: break-word;
+    position: relative;
   }
 
   // Colonnes avec largeurs définies

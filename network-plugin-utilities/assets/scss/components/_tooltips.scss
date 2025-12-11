@@ -213,6 +213,26 @@ td:first-child {
   }
 }
 
+// Tooltips spécifiques aux en-têtes de tableau
+.npu-header-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+.npu-header-info {
+  margin-left: $spacing-xs;
+  color: var(--npu-text-muted);
+  vertical-align: middle;
+
+  &:hover {
+    color: var(--npu-accent);
+  }
+}
+
+.npu-header-tip-data {
+  display: none;
+}
+
 // Pour colonnes à droite (dernière colonne)
 .column-plugins,
 td:last-child {

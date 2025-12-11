@@ -422,6 +422,24 @@ td:first-child .npu-help-icon[data-tooltip]::before {
   transform: none;
 }
 
+.npu-header-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+.npu-header-info {
+  margin-left: 4px;
+  color: var(--npu-text-muted);
+  vertical-align: middle;
+}
+.npu-header-info:hover {
+  color: var(--npu-accent);
+}
+
+.npu-header-tip-data {
+  display: none;
+}
+
 .column-plugins [data-tooltip]::after,
 .column-plugins [data-npu-tooltip]::after,
 .column-plugins .npu-help-icon[data-tooltip]::after,
@@ -475,13 +493,18 @@ td:last-child .npu-help-icon[data-tooltip]::before {
 .wp-list-table {
   table-layout: fixed;
   width: 100%;
+  overflow: visible;
+}
+.wp-list-table thead,
+.wp-list-table tr {
+  overflow: visible;
 }
 .wp-list-table th,
 .wp-list-table td {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   vertical-align: top;
   word-wrap: break-word;
+  position: relative;
 }
 .wp-list-table th.column-site,
 .wp-list-table td.column-site {
@@ -1072,3 +1095,5 @@ td:last-child .npu-help-icon[data-tooltip]::before {
   white-space: nowrap;
   border-width: 0;
 }
+
+/*# sourceMappingURL=npu-admin.css.map */

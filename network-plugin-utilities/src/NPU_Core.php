@@ -351,6 +351,33 @@ class NPU_Core {
 
             // Enqueue Dashicons (si pas déjà chargé)
             wp_enqueue_style('dashicons');
+
+            // Popovers (détails plugins)
+            wp_enqueue_script(
+                'npu-popovers',
+                NPU_URL . 'assets/js/npu-popovers.js',
+                [],
+                '1.7.2',
+                true
+            );
+
+            // Tooltips d’en-tête (injection icône pour colonnes triables)
+            wp_enqueue_script(
+                'npu-tooltips',
+                NPU_URL . 'assets/js/npu-tooltips.js',
+                [],
+                '1.7.2',
+                true
+            );
+
+            // Sélecteur de thème
+            wp_enqueue_script(
+                'npu-theme-switcher',
+                NPU_URL . 'assets/js/npu-theme-switcher.js',
+                [],
+                '1.7.2',
+                true
+            );
         }
     }
 
