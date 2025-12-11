@@ -346,9 +346,28 @@ class NPU_Core {
                 'npu-admin',
                 NPU_URL . 'assets/css/npu-admin.css',
                 [],
-                '1.7'
+                '1.7.2'
             );
+
+            // Enqueue Dashicons (si pas déjà chargé)
+            wp_enqueue_style('dashicons');
         }
+    }
+
+    /**
+     * Helper pour générer une icône d'aide avec tooltip
+     *
+     * @param string $tooltip_text Texte du tooltip
+     * @param string $icon Icon dashicons (sans le préfixe dashicons-)
+     * @return string HTML de l'icône
+     */
+    public static function render_help_icon($tooltip_text, $icon = 'editor-help') {
+        return sprintf(
+            '<span class="dashicons dashicons-%s npu-help-icon" aria-label="%s" data-tooltip="%s" tabindex="0"></span>',
+            esc_attr($icon),
+            esc_attr__('Aide', 'rdc-core-mu-utilities'),
+            esc_attr($tooltip_text)
+        );
     }
 
     /**

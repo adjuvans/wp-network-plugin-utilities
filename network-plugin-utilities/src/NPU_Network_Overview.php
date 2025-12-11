@@ -64,6 +64,9 @@ class NPU_Network_Overview extends WP_List_Table {
         // Afficher le résumé des alertes
         echo self::render_alerts_panel();
 
+        // Afficher la barre de filtres et recherche
+        echo self::render_filters_bar();
+
         // Créer et préparer le tableau
         $table = new self();
         $table->prepare_items();
@@ -89,13 +92,20 @@ class NPU_Network_Overview extends WP_List_Table {
     }
 
     public function get_columns() {
+        $icon_site = '<span class="dashicons dashicons-admin-site"></span> ';
+        $icon_info = '<span class="dashicons dashicons-info"></span> ';
+        $icon_users = '<span class="dashicons dashicons-admin-users"></span> ';
+        $icon_posts = '<span class="dashicons dashicons-admin-post"></span> ';
+        $icon_custom = '<span class="dashicons dashicons-admin-customizer"></span> ';
+        $icon_plugins = '<span class="dashicons dashicons-admin-plugins"></span> ';
+
         return [
-            'site'           => __( 'Site', 'rdc-core-mu-utilities' ),
-            'infos'          => __( 'Infos techniques', 'rdc-core-mu-utilities' ),
-            'users'          => __( 'Utilisateurs', 'rdc-core-mu-utilities' ),
-            'contents_builtin' => __( 'Contenus natifs', 'rdc-core-mu-utilities' ),
-            'contents_custom'  => __( 'Contenus personnalisés', 'rdc-core-mu-utilities' ),
-            'plugins'        => __( 'Plugins locaux', 'rdc-core-mu-utilities' ),
+            'site'           => $icon_site . __( 'Site', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Nom du site avec alertes et métadonnées techniques (ID, versions WP/PHP/MySQL, locale)', 'rdc-core-mu-utilities')),
+            'infos'          => $icon_info . __( 'Infos techniques', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Thème actif, nombre de médias, dernière activité détectée sur le site', 'rdc-core-mu-utilities')),
+            'users'          => $icon_users . __( 'Utilisateurs', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Liste des utilisateurs avec leurs rôles sur ce site', 'rdc-core-mu-utilities')),
+            'contents_builtin' => $icon_posts . __( 'Contenus natifs', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Post types et taxonomies WordPress par défaut (articles, pages, catégories, tags)', 'rdc-core-mu-utilities')),
+            'contents_custom'  => $icon_custom . __( 'Contenus personnalisés', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Custom Post Types et taxonomies ajoutés par les plugins ou thèmes', 'rdc-core-mu-utilities')),
+            'plugins'        => $icon_plugins . __( 'Plugins locaux', 'rdc-core-mu-utilities' ) . NPU_Core::render_help_icon(__('Plugins activés uniquement sur ce site (hors plugins réseau)', 'rdc-core-mu-utilities')),
         ];
     }
 
@@ -149,6 +159,77 @@ class NPU_Network_Overview extends WP_List_Table {
     }
 
     /**
+     * Affiche la barre de filtres et recherche
+     *
+     * @return string HTML
+     */
+    private static function render_filters_bar() {
+        $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+        $filter_alert = isset($_GET['npu_filter_alert']) ? sanitize_key($_GET['npu_filter_alert']) : '';
+        $filter_users = isset($_GET['npu_filter_users']) ? sanitize_key($_GET['npu_filter_users']) : '';
+        $current_page = isset($_GET['page']) ? sanitize_key($_GET['page']) : '';
+
+        ob_start();
+        ?>
+        <div class="npu-filters">
+            <form method="get" class="npu-search-form" action="">
+                <input type="hidden" name="page" value="<?php echo esc_attr($current_page); ?>">
+                <?php if ($filter_alert): ?>
+                    <input type="hidden" name="npu_filter_alert" value="<?php echo esc_attr($filter_alert); ?>">
+                <?php endif; ?>
+                <?php if ($filter_users): ?>
+                    <input type="hidden" name="npu_filter_users" value="<?php echo esc_attr($filter_users); ?>">
+                <?php endif; ?>
+                <input type="search"
+                       name="s"
+                       value="<?php echo esc_attr($search); ?>"
+                       placeholder="<?php esc_attr_e('Rechercher un site par nom ou URL...', 'rdc-core-mu-utilities'); ?>"
+                       class="npu-search-input">
+                <button type="submit" class="button npu-search-button">
+                    <span class="dashicons dashicons-search"></span>
+                    <?php _e('Rechercher', 'rdc-core-mu-utilities'); ?>
+                </button>
+                <?php if ($search || $filter_alert || $filter_users): ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . $current_page)); ?>" class="button">
+                        <span class="dashicons dashicons-dismiss"></span>
+                        <?php _e('Réinitialiser', 'rdc-core-mu-utilities'); ?>
+                    </a>
+                <?php endif; ?>
+            </form>
+
+            <form method="get" action="" class="npu-filter-form">
+                <input type="hidden" name="page" value="<?php echo esc_attr($current_page); ?>">
+                <?php if ($search): ?>
+                    <input type="hidden" name="s" value="<?php echo esc_attr($search); ?>">
+                <?php endif; ?>
+                <select name="npu_filter_alert" class="npu-filter-select" onchange="this.form.submit()">
+                    <option value=""><?php _e('Toutes les alertes', 'rdc-core-mu-utilities'); ?></option>
+                    <option value="error" <?php selected($filter_alert, 'error'); ?>>🔴 <?php _e('Critiques uniquement', 'rdc-core-mu-utilities'); ?></option>
+                    <option value="warning" <?php selected($filter_alert, 'warning'); ?>>🟠 <?php _e('Avertissements uniquement', 'rdc-core-mu-utilities'); ?></option>
+                    <option value="none" <?php selected($filter_alert, 'none'); ?>>✅ <?php _e('Sans alerte', 'rdc-core-mu-utilities'); ?></option>
+                </select>
+            </form>
+
+            <form method="get" action="" class="npu-filter-form">
+                <input type="hidden" name="page" value="<?php echo esc_attr($current_page); ?>">
+                <?php if ($search): ?>
+                    <input type="hidden" name="s" value="<?php echo esc_attr($search); ?>">
+                <?php endif; ?>
+                <?php if ($filter_alert): ?>
+                    <input type="hidden" name="npu_filter_alert" value="<?php echo esc_attr($filter_alert); ?>">
+                <?php endif; ?>
+                <select name="npu_filter_users" class="npu-filter-select" onchange="this.form.submit()">
+                    <option value=""><?php _e('Tous les sites', 'rdc-core-mu-utilities'); ?></option>
+                    <option value="no_users" <?php selected($filter_users, 'no_users'); ?>><?php _e('Sans utilisateurs', 'rdc-core-mu-utilities'); ?></option>
+                    <option value="with_users" <?php selected($filter_users, 'with_users'); ?>><?php _e('Avec utilisateurs', 'rdc-core-mu-utilities'); ?></option>
+                </select>
+            </form>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
      * Prépare les éléments à afficher
      */
     public function prepare_items() {
@@ -166,6 +247,81 @@ class NPU_Network_Overview extends WP_List_Table {
 
         // Récupérer tous les sites pour la pagination
         $all_sites = get_sites(['number' => 0]);
+
+        // Filtrage par recherche textuelle
+        if (! empty($_GET['s'])) {
+            $search = sanitize_text_field($_GET['s']);
+            $all_sites = array_filter($all_sites, function($site) use ($search) {
+                $name = get_blog_option($site->blog_id, 'blogname');
+                $url = $site->domain . $site->path;
+                return stripos($name, $search) !== false || stripos($url, $search) !== false;
+            });
+            $all_sites = array_values($all_sites); // Réindexer le tableau
+        }
+
+        // Filtrage par utilisateurs (nécessite de charger les données)
+        if (! empty($_GET['npu_filter_users'])) {
+            $filter_users = sanitize_key($_GET['npu_filter_users']);
+            $filtered_sites = [];
+
+            foreach ($all_sites as $site) {
+                $site_data = NPU_Cache::get_site_data($site, $network_plugins);
+                if ($site_data === false) continue;
+
+                $has_users = !empty($site_data['users']);
+
+                if ($filter_users === 'no_users' && !$has_users) {
+                    $filtered_sites[] = $site;
+                } elseif ($filter_users === 'with_users' && $has_users) {
+                    $filtered_sites[] = $site;
+                }
+            }
+            $all_sites = $filtered_sites;
+        }
+
+        // Filtrage par alertes (nécessite de charger les données)
+        if (! empty($_GET['npu_filter_alert'])) {
+            $filter_alert = sanitize_key($_GET['npu_filter_alert']);
+            $filtered_sites = [];
+
+            foreach ($all_sites as $site) {
+                $site_data = NPU_Cache::get_site_data($site, $network_plugins);
+                if ($site_data === false) continue;
+
+                $alerts = NPU_Alerts::get_site_alerts($site_data);
+                $has_alerts = !empty($alerts);
+
+                if ($filter_alert === 'none' && !$has_alerts) {
+                    $filtered_sites[] = $site;
+                } elseif ($filter_alert === 'error' && $has_alerts) {
+                    // Vérifier si au moins une alerte est de type error
+                    $has_error = false;
+                    foreach ($alerts as $alert) {
+                        if ($alert['severity'] === 'error') {
+                            $has_error = true;
+                            break;
+                        }
+                    }
+                    if ($has_error) {
+                        $filtered_sites[] = $site;
+                    }
+                } elseif ($filter_alert === 'warning' && $has_alerts) {
+                    // Vérifier si au moins une alerte est de type warning
+                    $has_warning = false;
+                    foreach ($alerts as $alert) {
+                        if ($alert['severity'] === 'warning') {
+                            $has_warning = true;
+                            break;
+                        }
+                    }
+                    if ($has_warning) {
+                        $filtered_sites[] = $site;
+                    }
+                }
+            }
+            $all_sites = $filtered_sites;
+        }
+
         $total_items = count($all_sites);
 
         // Ne traiter que les sites de la page courante
@@ -221,17 +377,12 @@ class NPU_Network_Overview extends WP_List_Table {
         $alerts_badge = NPU_Alerts::render_alerts_badge($alerts);
 
         $tech_meta = $site_data['technical_info'];
-        $meta_parts = [
-            sprintf(__('ID #%d', 'rdc-core-mu-utilities'), intval($site_data['blog_id'])),
-            'WP ' . ($tech_meta['wp_version'] ?? ''),
-            'PHP ' . ($tech_meta['php_version'] ?? ''),
-            'MySQL ' . ($tech_meta['mysql_version'] ?? ''),
-            ($tech_meta['locale'] ?? ''),
-        ];
         $site_submeta = '<div class="npu-site-meta">';
-        foreach ($meta_parts as $part) {
-            $site_submeta .= '<span class="npu-meta-badge">' . esc_html($part) . '</span>';
-        }
+        $site_submeta .= '<span class="npu-badge npu-badge--meta"><span class="dashicons dashicons-admin-site"></span> ID #' . intval($site_data['blog_id']) . '</span>';
+        $site_submeta .= '<span class="npu-badge npu-badge--info"><span class="dashicons dashicons-wordpress"></span> WP ' . esc_html($tech_meta['wp_version'] ?? '') . '</span>';
+        $site_submeta .= '<span class="npu-badge npu-badge--info">PHP ' . esc_html($tech_meta['php_version'] ?? '') . '</span>';
+        $site_submeta .= '<span class="npu-badge npu-badge--info">MySQL ' . esc_html($tech_meta['mysql_version'] ?? '') . '</span>';
+        $site_submeta .= '<span class="npu-badge npu-badge--meta"><span class="dashicons dashicons-translation"></span> ' . esc_html($tech_meta['locale'] ?? '') . '</span>';
         $site_submeta .= '</div>';
 
         // Nom du site avec badge d'alertes + métadonnées
@@ -245,7 +396,7 @@ class NPU_Network_Overview extends WP_List_Table {
             esc_html($site_data['site_info']['url'])
         );
 
-        // Infos techniques
+        // Infos techniques avec wrapper uniforme
         $tech = $site_data['technical_info'];
         $theme_info = sprintf(
             '<a href="%s" target="_blank">%s</a> (v%s)',
@@ -254,14 +405,14 @@ class NPU_Network_Overview extends WP_List_Table {
             esc_html($tech['theme_version'])
         );
 
-        $infos = '<ul>';
-        $infos .= '<li>' . __("Thème", 'rdc-core-mu-utilities') . ': ' . $theme_info . '</li>';
-        $infos .= '<li>' . __("Médias", 'rdc-core-mu-utilities') . ': '
-            . '<span class="npu-pill npu-tooltip" data-tooltip="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '">'
+        $infos = '<div class="npu-table-cell-content"><ul>';
+        $infos .= '<li><span class="dashicons dashicons-admin-appearance"></span>' . __("Thème", 'rdc-core-mu-utilities') . ': ' . $theme_info . '</li>';
+        $infos .= '<li><span class="dashicons dashicons-format-image"></span>' . __("Médias", 'rdc-core-mu-utilities') . ': '
+            . '<span class="npu-badge npu-badge--success" data-tooltip="' . esc_attr__("Médias avec statut inherit ou publish (utilisables)", 'rdc-core-mu-utilities') . '"><span class="dashicons dashicons-yes"></span> '
             . __("Valides", 'rdc-core-mu-utilities') . ': ' . intval($tech['valid_media_count']) . '</span> '
-            . '<span class="npu-pill npu-tooltip" data-tooltip="' . esc_attr__("Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement", 'rdc-core-mu-utilities') . '">'
+            . '<span class="npu-badge npu-badge--info" data-tooltip="' . esc_attr__("Équivalent du compteur standard WordPress : pièces jointes en statut inherit uniquement", 'rdc-core-mu-utilities') . '"><span class="dashicons dashicons-media-document"></span> '
             . __("Fichiers", 'rdc-core-mu-utilities') . ': ' . intval($tech['media_files']) . '</span> '
-            . '<span class="npu-pill">' . __("Total", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</span></li>';
+            . '<span class="npu-badge npu-badge--meta"><span class="dashicons dashicons-images-alt2"></span> ' . __("Total", 'rdc-core-mu-utilities') . ': ' . intval($tech['attachments_total']) . '</span></li>';
         $last_content = $tech['last_content'] ?? null;
         if ($last_content && ! empty($last_content['date'])) {
             $type_label = $this->get_post_type_label($last_content['type'] ?? '');
@@ -276,26 +427,30 @@ class NPU_Network_Overview extends WP_List_Table {
                 $type_label
             );
 
-            $infos .= '<li><span class="npu-last-activity npu-tooltip" data-tooltip="' . esc_attr($tooltip) . '">'
+            $infos .= '<li><span class="dashicons dashicons-backup"></span><span class="npu-last-activity npu-tooltip" data-tooltip="' . esc_attr($tooltip) . '">'
                 . __('Dernière activité', 'rdc-core-mu-utilities') . ': ' . esc_html($relative)
                 . '</span></li>';
         } else {
-            $infos .= '<li>' . __("Dernière activité", 'rdc-core-mu-utilities') . ': ' . __("N/A", 'rdc-core-mu-utilities') . '</li>';
+            $infos .= '<li><span class="dashicons dashicons-backup"></span>' . __("Dernière activité", 'rdc-core-mu-utilities') . ': ' . __("N/A", 'rdc-core-mu-utilities') . '</li>';
         }
-        $infos .= '</ul>';
+        $infos .= '</ul></div>';
 
-        // Utilisateurs
+        // Utilisateurs avec wrapper uniforme
         $users = $site_data['users'];
+        $user_list = '<div class="npu-table-cell-content">';
+
         if ($users) {
-            $user_list = '<ul>';
+            $user_list .= '<ul>';
             foreach ($users as $user) {
-                $user_list .= '<li><a href="' . esc_url($admin_url . 'user-edit.php?user_id=' . $user['ID']) . '" target="_blank">'
+                $user_list .= '<li><span class="dashicons dashicons-admin-users"></span><a href="' . esc_url($admin_url . 'user-edit.php?user_id=' . $user['ID']) . '" target="_blank">'
                     . esc_html($user['login']) . '</a> <span class="npu-muted">(' . esc_html($user['roles']) . ')</span></li>';
             }
             $user_list .= '</ul>';
         } else {
-            $user_list = '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
+            $user_list .= '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
         }
+
+        $user_list .= '</div>';
 
         // CPT natifs
         $cpt_builtin_list = $this->format_post_types($site_data['post_types_builtin'], $admin_url);
@@ -309,10 +464,12 @@ class NPU_Network_Overview extends WP_List_Table {
         // Taxonomies personnalisées
         $taxo_custom_list = $this->format_taxonomies($site_data['taxonomies_custom'], $admin_url);
 
-        // Plugins locaux
+        // Plugins locaux avec wrapper uniforme
         $local_plugins = $site_data['local_plugins'];
+        $plugins_list = '<div class="npu-table-cell-content">';
+
         if ($local_plugins) {
-            $plugins_list = '<ul>';
+            $plugins_list .= '<ul>';
             foreach ($local_plugins as $plugin) {
                 $plugin_name = is_array($plugin) ? ($plugin['name'] ?? $plugin['file'] ?? '') : $plugin;
                 $search_link = $admin_url . 'plugins.php?s=' . rawurlencode($plugin_name);
@@ -339,18 +496,23 @@ class NPU_Network_Overview extends WP_List_Table {
                     }
 
                     if (! empty($info_parts)) {
-                        $info_html = '<details class="npu-plugin-details"><summary>Infos</summary><div class="npu-plugin-meta">'
-                            . implode('<br>', $info_parts)
-                            . '</div></details>';
+                        $tooltip_content = implode(' • ', $info_parts);
+                        $info_html = sprintf(
+                            ' <span class="dashicons dashicons-info-outline npu-plugin-info" aria-label="%s" data-npu-tooltip="%s" tabindex="0"></span>',
+                            esc_attr__('Informations du plugin', 'rdc-core-mu-utilities'),
+                            esc_attr($tooltip_content)
+                        );
                     }
                 }
 
-                $plugins_list .= '<li><a href="' . esc_url($search_link) . '" target="_blank">' . esc_html($plugin_name) . '</a>' . $info_html . '</li>';
+                $plugins_list .= '<li><span class="dashicons dashicons-admin-plugins"></span><a href="' . esc_url($search_link) . '" target="_blank">' . esc_html($plugin_name) . '</a>' . $info_html . '</li>';
             }
             $plugins_list .= '</ul>';
         } else {
-            $plugins_list = '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
+            $plugins_list .= '<em>' . __("Aucun", 'rdc-core-mu-utilities') . '</em>';
         }
+
+        $plugins_list .= '</div>';
 
         return [
             'site'         => $site_name,
@@ -407,12 +569,25 @@ class NPU_Network_Overview extends WP_List_Table {
     }
 
     /**
-     * Formate l'affichage combiné des CPT et taxonomies.
+     * Formate l'affichage combiné des CPT et taxonomies avec wrapper uniforme.
      */
     private function format_contents_column($post_types_html, $taxonomies_html) {
-        $post_types_section = '<div class="npu-contents-section"><strong>' . __("Post types", 'rdc-core-mu-utilities') . '</strong><br>' . $post_types_html . '</div>';
-        $taxonomies_section = '<div class="npu-contents-section"><strong>' . __("Taxonomies", 'rdc-core-mu-utilities') . '</strong><br>' . $taxonomies_html . '</div>';
-        return $post_types_section . $taxonomies_section;
+        $output = '<div class="npu-table-cell-content">';
+
+        // Section Post types
+        $output .= '<div>';
+        $output .= '<strong class="npu-section-title"><span class="dashicons dashicons-edit"></span>' . __("Post types", 'rdc-core-mu-utilities') . '</strong>';
+        $output .= $post_types_html;
+        $output .= '</div>';
+
+        // Section Taxonomies
+        $output .= '<div>';
+        $output .= '<strong class="npu-section-title"><span class="dashicons dashicons-category"></span>' . __("Taxonomies", 'rdc-core-mu-utilities') . '</strong>';
+        $output .= $taxonomies_html;
+        $output .= '</div>';
+
+        $output .= '</div>';
+        return $output;
     }
 
     /**
