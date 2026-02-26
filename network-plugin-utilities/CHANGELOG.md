@@ -45,7 +45,7 @@
 ### 🐛 Corrections de bugs
 - **CSS jamais chargé** : Correction du hook `admin_enqueue_scripts` (mauvais slug de page)
 - **Double initialisation** : Suppression de l'appel en double de `NPU_Network_Sites_Menu::init()`
-- **Text domain incohérent** : Uniformisation à `rdc-core-mu-utilities`
+- **Text domain incohérent** : Uniformisation à `npu-core`
 - **Code mort** : Suppression de la méthode `render_stat_page()` non utilisée
 - **Avertissement PHP** : Vérification de l'existence de la propriété `publish` avant accès
 

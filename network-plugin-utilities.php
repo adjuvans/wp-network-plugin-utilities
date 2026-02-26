@@ -4,7 +4,7 @@ Plugin Name: Network Plugin Utilities (MU)
 Description: Liste les sites du réseau avec plugins locaux, utilisateurs, stats, taxonomies et infos techniques (thème, version WP, langue, médias, dernière mise à jour).
 Author: Cyrille de Gourcy <cyrille@gourcy.net>
 Version: 1.7.0
-Text Domain: rdc-core-mu-utilities
+Text Domain: npu-core
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;

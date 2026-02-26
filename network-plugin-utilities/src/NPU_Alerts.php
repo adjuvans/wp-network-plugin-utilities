@@ -43,7 +43,7 @@ class NPU_Alerts {
             $alerts[] = [
                 'type' => self::ALERT_NO_USERS,
                 'severity' => 'error',
-                'message' => __("Site sans utilisateurs", 'rdc-core-mu-utilities'),
+                'message' => __("Site sans utilisateurs", 'npu-core'),
                 'icon' => '⚠️',
             ];
         }
@@ -55,7 +55,7 @@ class NPU_Alerts {
                 'type' => self::ALERT_INACTIVE,
                 'severity' => 'warning',
                 'message' => sprintf(
-                    __("Inactif depuis %d mois", 'rdc-core-mu-utilities'),
+                    __("Inactif depuis %d mois", 'npu-core'),
                     $inactive_info['months']
                 ),
                 'icon' => '⏰',
@@ -69,7 +69,7 @@ class NPU_Alerts {
                 'type' => self::ALERT_HIGH_MEDIA,
                 'severity' => 'info',
                 'message' => sprintf(
-                    __("%d médias (seuil: %d)", 'rdc-core-mu-utilities'),
+                    __("%d médias (seuil: %d)", 'npu-core'),
                     $media_info['count'],
                     $media_info['threshold']
                 ),
@@ -259,14 +259,14 @@ class NPU_Alerts {
     public static function render_alerts_summary($summary) {
         if ($summary['sites_with_alerts'] === 0) {
             return '<div class="notice notice-success inline"><p>'
-                . __("✓ Aucune alerte détectée sur le réseau", 'rdc-core-mu-utilities')
+                . __("✓ Aucune alerte détectée sur le réseau", 'npu-core')
                 . '</p></div>';
         }
 
         $html = '<div class="notice notice-warning inline npu-alert-box">';
         $html .= '<p><strong>'
             . sprintf(
-                __("⚠️ %d site(s) nécessite(nt) de l'attention", 'rdc-core-mu-utilities'),
+                __("⚠️ %d site(s) nécessite(nt) de l'attention", 'npu-core'),
                 $summary['sites_with_alerts']
             )
             . '</strong></p>';
@@ -276,7 +276,7 @@ class NPU_Alerts {
         if ($summary['by_type'][self::ALERT_NO_USERS] > 0) {
             $html .= '<li>'
                 . sprintf(
-                    __("👤 %d site(s) sans utilisateurs", 'rdc-core-mu-utilities'),
+                    __("👤 %d site(s) sans utilisateurs", 'npu-core'),
                     $summary['by_type'][self::ALERT_NO_USERS]
                 )
                 . '</li>';
@@ -285,7 +285,7 @@ class NPU_Alerts {
         if ($summary['by_type'][self::ALERT_INACTIVE] > 0) {
             $html .= '<li>'
                 . sprintf(
-                    __("⏰ %d site(s) inactif(s)", 'rdc-core-mu-utilities'),
+                    __("⏰ %d site(s) inactif(s)", 'npu-core'),
                     $summary['by_type'][self::ALERT_INACTIVE]
                 )
                 . '</li>';
@@ -294,7 +294,7 @@ class NPU_Alerts {
         if ($summary['by_type'][self::ALERT_HIGH_MEDIA] > 0) {
             $html .= '<li>'
                 . sprintf(
-                    __("📁 %d site(s) avec beaucoup de médias", 'rdc-core-mu-utilities'),
+                    __("📁 %d site(s) avec beaucoup de médias", 'npu-core'),
                     $summary['by_type'][self::ALERT_HIGH_MEDIA]
                 )
                 . '</li>';

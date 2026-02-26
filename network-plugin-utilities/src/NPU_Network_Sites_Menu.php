@@ -77,7 +77,7 @@ class NPU_Network_Sites_Menu
     {
         add_meta_box(
             'network_sites_nav_links',
-            __('Sites du réseau', 'rdc-core-mu-utilities'),
+            __('Sites du réseau', 'npu-core'),
             [__CLASS__, 'renderNavMenuMetabox'],
             'nav-menus',
             'side',
@@ -166,7 +166,7 @@ class NPU_Network_Sites_Menu
 
         printf(
             '<p class="description description-wide npu-network-site-lock">%s</p>',
-            esc_html__('URL verrouillée (site du réseau). Le titre peut être personnalisé.', 'rdc-core-mu-utilities')
+            esc_html__('URL verrouillée (site du réseau). Le titre peut être personnalisé.', 'npu-core')
         );
     }
 
@@ -199,7 +199,7 @@ class NPU_Network_Sites_Menu
         $blog_id = (int) $item->object_id;
         $item->type = self::ITEM_TYPE;
         $item->object = self::ITEM_OBJECT;
-        $item->type_label = __('Site du réseau', 'rdc-core-mu-utilities');
+        $item->type_label = __('Site du réseau', 'npu-core');
         $item->url = self::getSiteUrl($blog_id);
         if (empty($item->title)) {
             $item->title = self::getSiteTitle($blog_id);
@@ -280,7 +280,7 @@ class NPU_Network_Sites_Menu
         $title = get_blog_option($blog_id, 'blogname');
 
         if (! $title) {
-            $title = sprintf(__('Site #%d', 'rdc-core-mu-utilities'), $blog_id);
+            $title = sprintf(__('Site #%d', 'npu-core'), $blog_id);
         }
 
         return (string) $title;

@@ -27,12 +27,12 @@ class NPU_Export {
 
         // Vérifier les permissions
         if (!current_user_can('manage_network_plugins')) {
-            wp_die(__("Vous n'avez pas les permissions nécessaires.", 'rdc-core-mu-utilities'));
+            wp_die(__("Vous n'avez pas les permissions nécessaires.", 'npu-core'));
         }
 
         // Vérifier le nonce
         if (!isset($_GET['npu_nonce']) || !wp_verify_nonce($_GET['npu_nonce'], 'npu_export')) {
-            wp_die(__("Nonce invalide.", 'rdc-core-mu-utilities'));
+            wp_die(__("Nonce invalide.", 'npu-core'));
         }
 
         $format = sanitize_text_field($_GET['npu_export']);
@@ -45,7 +45,7 @@ class NPU_Export {
                 self::export_json();
                 break;
             default:
-                wp_die(__("Format d'export non supporté.", 'rdc-core-mu-utilities'));
+                wp_die(__("Format d'export non supporté.", 'npu-core'));
         }
     }
 
@@ -68,22 +68,22 @@ class NPU_Export {
 
         // En-têtes CSV
         $headers = [
-            __("ID", 'rdc-core-mu-utilities'),
-            __("Nom du site", 'rdc-core-mu-utilities'),
-            __("URL", 'rdc-core-mu-utilities'),
-            __("Thème", 'rdc-core-mu-utilities'),
-            __("Version thème", 'rdc-core-mu-utilities'),
-            __("Langue", 'rdc-core-mu-utilities'),
-            __("Nombre d'utilisateurs", 'rdc-core-mu-utilities'),
-            __("Pièces jointes totales", 'rdc-core-mu-utilities'),
-            __("Médias valides", 'rdc-core-mu-utilities'),
-            __("Fichiers média", 'rdc-core-mu-utilities'),
-            __("Dernier contenu", 'rdc-core-mu-utilities'),
-            __("Plugins locaux", 'rdc-core-mu-utilities'),
-            __("CPT natifs", 'rdc-core-mu-utilities'),
-            __("CPT personnalisés", 'rdc-core-mu-utilities'),
-            __("Taxonomies natives", 'rdc-core-mu-utilities'),
-            __("Taxonomies personnalisées", 'rdc-core-mu-utilities'),
+            __("ID", 'npu-core'),
+            __("Nom du site", 'npu-core'),
+            __("URL", 'npu-core'),
+            __("Thème", 'npu-core'),
+            __("Version thème", 'npu-core'),
+            __("Langue", 'npu-core'),
+            __("Nombre d'utilisateurs", 'npu-core'),
+            __("Pièces jointes totales", 'npu-core'),
+            __("Médias valides", 'npu-core'),
+            __("Fichiers média", 'npu-core'),
+            __("Dernier contenu", 'npu-core'),
+            __("Plugins locaux", 'npu-core'),
+            __("CPT natifs", 'npu-core'),
+            __("CPT personnalisés", 'npu-core'),
+            __("Taxonomies natives", 'npu-core'),
+            __("Taxonomies personnalisées", 'npu-core'),
         ];
         fputcsv($output, $headers);
 

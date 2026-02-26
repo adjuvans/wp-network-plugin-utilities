@@ -99,8 +99,8 @@ class NPU_Core {
 
         // Créer le menu principal (⚠️ pas de callback pour éviter le doublon automatique)
         add_menu_page(
-            __( 'NPU core', 'rdc-core-mu-utilities' ),
-            __( 'NPU core', 'rdc-core-mu-utilities' ),
+            __( 'NPU core', 'npu-core' ),
+            __( 'NPU core', 'npu-core' ),
             'manage_network_plugins',
             $top_menu_slug,
             [ __CLASS__, 'redirect_to_default_submenu' ],
@@ -112,7 +112,7 @@ class NPU_Core {
         global $submenu;
         if ( isset($submenu[$top_menu_slug][0]) ) {
             // Variante 1 : renommer 
-            // $submenu[$top_menu_slug][0][0] = __( 'Tableau de bord', 'rdc-core-mu-utilities' );
+            // $submenu[$top_menu_slug][0][0] = __( 'Tableau de bord', 'npu-core' );
 
             // Variante 2 : supprimer
             unset($submenu[$top_menu_slug][0]);
@@ -121,8 +121,8 @@ class NPU_Core {
         // Sous-menu Analyse du réseau
         $hook = add_submenu_page(
             $top_menu_slug,
-            __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
-            __( 'Analyse du réseau', 'rdc-core-mu-utilities' ),
+            __( 'Analyse du réseau', 'npu-core' ),
+            __( 'Analyse du réseau', 'npu-core' ),
             'manage_network_plugins',
             'npu-network-overview',
             [ 'NPU_Network_Overview', 'render_page' ]
@@ -134,8 +134,8 @@ class NPU_Core {
         // Sous-menu Options NPU
         add_submenu_page(
             $top_menu_slug,
-            __( 'Paramètres', 'rdc-core-mu-utilities' ),
-            __( 'Paramètres', 'rdc-core-mu-utilities' ),
+            __( 'Paramètres', 'npu-core' ),
+            __( 'Paramètres', 'npu-core' ),
             'manage_network_options',
             'npu-settings',
             [ __CLASS__, 'render_options_page' ]
@@ -166,7 +166,7 @@ class NPU_Core {
 
         // Option pour le nombre de sites par page
         add_screen_option('per_page', [
-            'label' => __('Sites par page', 'rdc-core-mu-utilities'),
+            'label' => __('Sites par page', 'npu-core'),
             'default' => 20,
             'option' => 'sites_per_page',
         ]);
@@ -235,7 +235,7 @@ class NPU_Core {
             // Invalider le cache pour forcer la mise à jour
             NPU_Cache::clear_cache();
 
-            echo '<div class="updated"><p>' . __("Options sauvegardées. Le cache a été rafraîchi.", 'rdc-core-mu-utilities') . '</p></div>';
+            echo '<div class="updated"><p>' . __("Options sauvegardées. Le cache a été rafraîchi.", 'npu-core') . '</p></div>';
         }
 
         $enabled = self::is_menu_enabled();
@@ -248,28 +248,28 @@ class NPU_Core {
 
         ?>
         <div class="wrap">
-            <h1><?php _e('Options NPU', 'rdc-core-mu-utilities'); ?></h1>
+            <h1><?php _e('Options NPU', 'npu-core'); ?></h1>
             <form method="post">
                 <?php wp_nonce_field('npu_save_options'); ?>
                 <table class="form-table">
                     <tr>
-                        <th scope="row"><?php _e('Activer le menu réseau', 'rdc-core-mu-utilities'); ?></th>
+                        <th scope="row"><?php _e('Activer le menu réseau', 'npu-core'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="npu_enable_network_menu" value="1" <?php checked($enabled, 1); ?>>
-                                <?php _e('Oui, afficher la liste des sites du réseau', 'rdc-core-mu-utilities'); ?>
+                                <?php _e('Oui, afficher la liste des sites du réseau', 'npu-core'); ?>
                             </label>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php _e('Post types inclus dans l\'analyse d\'activité', 'rdc-core-mu-utilities'); ?></th>
+                        <th scope="row"><?php _e('Post types inclus dans l\'analyse d\'activité', 'npu-core'); ?></th>
                         <td>
                             <fieldset>
-                                <legend class="screen-reader-text"><span><?php _e('Post types à analyser', 'rdc-core-mu-utilities'); ?></span></legend>
+                                <legend class="screen-reader-text"><span><?php _e('Post types à analyser', 'npu-core'); ?></span></legend>
                                 <p class="description npu-option-description">
-                                    <?php _e('Sélectionnez les types de contenu à prendre en compte pour déterminer si un site est actif ou inactif.', 'rdc-core-mu-utilities'); ?><br>
-                                    <?php _e('Par défaut, WordPress analyse uniquement les articles ("Posts") et les pages, mais vous pouvez inclure d\'autres contenus comme les événements, les projets, etc.', 'rdc-core-mu-utilities'); ?><br>
-                                    <strong><?php _e('Le plugin utilisera la date de publication du dernier contenu parmi les types sélectionnés.', 'rdc-core-mu-utilities'); ?></strong>
+                                    <?php _e('Sélectionnez les types de contenu à prendre en compte pour déterminer si un site est actif ou inactif.', 'npu-core'); ?><br>
+                                    <?php _e('Par défaut, WordPress analyse uniquement les articles ("Posts") et les pages, mais vous pouvez inclure d\'autres contenus comme les événements, les projets, etc.', 'npu-core'); ?><br>
+                                    <strong><?php _e('Le plugin utilisera la date de publication du dernier contenu parmi les types sélectionnés.', 'npu-core'); ?></strong>
                                 </p>
                                 <?php foreach ($all_post_types as $post_type_obj): ?>
                                     <label class="npu-option-checkbox">
@@ -287,15 +287,15 @@ class NPU_Core {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php _e('Limiter l\'analyse aux plugins', 'rdc-core-mu-utilities'); ?></th>
+                        <th scope="row"><?php _e('Limiter l\'analyse aux plugins', 'npu-core'); ?></th>
                         <td>
                             <fieldset>
-                                <legend class="screen-reader-text"><span><?php _e('Plugins à analyser', 'rdc-core-mu-utilities'); ?></span></legend>
+                                <legend class="screen-reader-text"><span><?php _e('Plugins à analyser', 'npu-core'); ?></span></legend>
                                 <p class="description npu-option-description">
-                                    <?php _e('Sélectionnez les plugins actifs (réseau ou site principal) dont les CPT et taxonomies doivent être analysés. Laisser vide pour analyser tous les plugins.', 'rdc-core-mu-utilities'); ?>
+                                    <?php _e('Sélectionnez les plugins actifs (réseau ou site principal) dont les CPT et taxonomies doivent être analysés. Laisser vide pour analyser tous les plugins.', 'npu-core'); ?>
                                 </p>
                                 <?php if (empty($active_plugins)) : ?>
-                                    <em><?php _e('Aucun plugin actif détecté.', 'rdc-core-mu-utilities'); ?></em>
+                                    <em><?php _e('Aucun plugin actif détecté.', 'npu-core'); ?></em>
                                 <?php else : ?>
                                     <?php foreach ($active_plugins as $plugin) : ?>
                                         <label class="npu-option-checkbox">
@@ -308,9 +308,9 @@ class NPU_Core {
                                             <?php echo esc_html($plugin['name']); ?>
                                             <code class="npu-code">(<?php echo esc_html($plugin['slug']); ?>)</code>
                                             <?php if ($plugin['is_network']) : ?>
-                                                <span class="npu-badge npu-badge-network"><?php _e('Réseau', 'rdc-core-mu-utilities'); ?></span>
+                                                <span class="npu-badge npu-badge-network"><?php _e('Réseau', 'npu-core'); ?></span>
                                             <?php else : ?>
-                                                <span class="npu-badge npu-badge-main"><?php _e('Site principal', 'rdc-core-mu-utilities'); ?></span>
+                                                <span class="npu-badge npu-badge-main"><?php _e('Site principal', 'npu-core'); ?></span>
                                             <?php endif; ?>
                                         </label>
                                     <?php endforeach; ?>
@@ -319,7 +319,7 @@ class NPU_Core {
                         </td>
                     </tr>
                 </table>
-                <?php submit_button(__('Enregistrer', 'rdc-core-mu-utilities'), 'primary', 'npu_save'); ?>
+                <?php submit_button(__('Enregistrer', 'npu-core'), 'primary', 'npu_save'); ?>
             </form>
         </div>
         <?php
@@ -392,7 +392,7 @@ class NPU_Core {
         return sprintf(
             '<span class="dashicons dashicons-%s npu-help-icon" aria-label="%s" data-tooltip="%s" tabindex="0"></span>',
             esc_attr($icon),
-            esc_attr__('Aide', 'rdc-core-mu-utilities'),
+            esc_attr__('Aide', 'npu-core'),
             esc_attr($tooltip_text)
         );
     }
