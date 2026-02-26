@@ -1,6 +1,6 @@
 # Network Plugin Utilities (MU)
 
-**Version 1.6.0** | Must-Use Plugin pour WordPress Multisite
+**Version 1.7.0** | Must-Use Plugin pour WordPress Multisite
 
 Outil complet d'audit et de gestion pour réseaux WordPress multisite. Affiche un tableau de bord récapitulatif de tous les sites avec leurs méta-données, statistiques et alertes.
 

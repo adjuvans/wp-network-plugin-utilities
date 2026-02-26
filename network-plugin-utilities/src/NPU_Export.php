@@ -131,7 +131,7 @@ class NPU_Export {
                 'export_date' => current_time('mysql'),
                 'network_url' => network_site_url(),
                 'total_sites' => count($data),
-                'plugin_version' => '1.6.0',
+                'plugin_version' => '1.7.0',
             ],
             'sites' => $data,
         ];
